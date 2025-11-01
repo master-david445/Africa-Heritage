@@ -4,16 +4,13 @@ import { useState } from "react"
 import { Menu, X, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
-import AuthModal from "./auth-modal"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [authModalOpen, setAuthModalOpen] = useState(false)
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login")
-  const { user, logout } = useAuth()
+  const { user, profile, isLoading } = useAuth()
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -21,11 +18,6 @@ export default function Header() {
     await supabase.auth.signOut()
     router.push("/")
     router.refresh()
-  }
-
-  const handleAuthClick = (mode: "login" | "signup") => {
-    setAuthMode(mode)
-    setAuthModalOpen(true)
   }
 
   return (
@@ -55,7 +47,7 @@ export default function Header() {
               <Link href="/leaderboard" className="hover:opacity-80 transition">
                 Leaderboard
               </Link>
-              {user?.isAdmin && (
+              {profile?.is_admin && (
                 <Link href="/admin" className="hover:opacity-80 transition font-semibold">
                   Admin
                 </Link>
@@ -64,9 +56,9 @@ export default function Header() {
 
             {/* Auth Buttons */}
             <div className="flex items-center gap-2">
-              {user ? (
+              {!isLoading && user && profile ? (
                 <div className="flex items-center gap-3">
-                  <span className="hidden sm:inline text-sm">{user.name}</span>
+                  <span className="hidden sm:inline text-sm">{profile.username}</span>
                   <Link href={`/profile/${user.id}`}>
                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
                       <User className="w-4 h-4" />
@@ -114,7 +106,7 @@ export default function Header() {
                 <Link href="/leaderboard" className="hover:opacity-80 transition">
                   Leaderboard
                 </Link>
-                {!user && (
+                {!isLoading && !user && (
                   <div className="flex gap-2 pt-2">
                     <Link href="/auth/login" className="flex-1">
                       <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 w-full">
@@ -133,9 +125,6 @@ export default function Header() {
           )}
         </div>
       </header>
-
-      {/* Auth Modal */}
-      {authModalOpen && <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} mode={authMode} />}
     </>
   )
 }

@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Heart, MessageCircle, Bookmark, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { toggleLike } from "@/app/actions/likes"
+import { toggleLike, isProverbLikedByUser } from "@/app/actions/likes"
 import { toggleBookmark } from "@/app/actions/bookmarks"
-import { createComment } from "@/app/actions/comments"
+import { createComment, getProverbComments } from "@/app/actions/comments"
+import { useAuth } from "@/lib/auth-context"
 import type { Database } from "@/lib/database.types"
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"]
@@ -22,6 +23,7 @@ interface ProverbCardProps {
 }
 
 export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) {
+  const { user } = useAuth()
   const [isLiked, setIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(proverb.likes?.length || 0)
   const [isBookmarked, setIsBookmarked] = useState(false)
@@ -29,43 +31,88 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
   const [newComment, setNewComment] = useState("")
   const [comments, setComments] = useState(proverb.comments || [])
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadUserInteractions = async () => {
+      if (!user) return
+      try {
+        const liked = await isProverbLikedByUser(proverb.id)
+        setIsLiked(liked)
+      } catch (err) {
+        console.error("[v0] Error loading like status:", err)
+      }
+    }
+
+    loadUserInteractions()
+  }, [user, proverb.id])
+
+  useEffect(() => {
+    const loadComments = async () => {
+      if (!showComments) return
+      try {
+        const fetchedComments = await getProverbComments(proverb.id)
+        setComments(fetchedComments)
+      } catch (err) {
+        console.error("[v0] Error loading comments:", err)
+        setError("Failed to load comments")
+      }
+    }
+
+    loadComments()
+  }, [showComments, proverb.id])
 
   const handleLike = async () => {
-    if (!currentUser) return
+    if (!user) {
+      setError("Please log in to like proverbs")
+      return
+    }
     try {
       setIsLoading(true)
+      setError(null)
       const result = await toggleLike(proverb.id)
       setIsLiked(result.liked)
-      setLikeCount(result.liked ? likeCount + 1 : likeCount - 1)
-    } catch (error) {
-      console.error("Error toggling like:", error)
+      setLikeCount(result.liked ? likeCount + 1 : Math.max(0, likeCount - 1))
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Error toggling like"
+      console.error("[v0] Like error:", errorMsg)
+      setError(errorMsg)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleBookmark = async () => {
-    if (!currentUser) return
+    if (!user) {
+      setError("Please log in to bookmark proverbs")
+      return
+    }
     try {
       setIsLoading(true)
+      setError(null)
       const result = await toggleBookmark(proverb.id)
       setIsBookmarked(result.bookmarked)
-    } catch (error) {
-      console.error("Error toggling bookmark:", error)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Error toggling bookmark"
+      console.error("[v0] Bookmark error:", errorMsg)
+      setError(errorMsg)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleCommentSubmit = async () => {
-    if (!currentUser || !newComment.trim()) return
+    if (!user || !newComment.trim()) return
     try {
       setIsLoading(true)
+      setError(null)
       const comment = await createComment(proverb.id, newComment)
       setComments([comment, ...comments])
       setNewComment("")
-    } catch (error) {
-      console.error("Error creating comment:", error)
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Error posting comment"
+      console.error("[v0] Comment error:", errorMsg)
+      setError(errorMsg)
     } finally {
       setIsLoading(false)
     }
@@ -113,12 +160,15 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
         </div>
       )}
 
+      {/* Error Message */}
+      {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+
       {/* Social Actions */}
       <div className="flex gap-4 text-gray-500 text-sm mb-4 border-t pt-4">
         <button
           onClick={handleLike}
           className={`flex items-center gap-1 transition ${isLiked ? "text-red-600" : "hover:text-red-600"}`}
-          disabled={!currentUser || isLoading}
+          disabled={!user || isLoading}
         >
           <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
           {likeCount}
@@ -126,7 +176,7 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
         <button
           onClick={() => setShowComments(!showComments)}
           className="flex items-center gap-1 hover:text-blue-600 transition"
-          disabled={!currentUser}
+          disabled={!user}
         >
           <MessageCircle className="w-4 h-4" />
           {comments.length}
@@ -134,7 +184,7 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
         <button
           onClick={handleBookmark}
           className={`flex items-center gap-1 transition ${isBookmarked ? "text-amber-600" : "hover:text-amber-600"}`}
-          disabled={!currentUser || isLoading}
+          disabled={!user || isLoading}
         >
           <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`} />
         </button>
@@ -165,7 +215,7 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
           )}
 
           {/* Add Comment */}
-          {currentUser && (
+          {user && (
             <div className="flex gap-2">
               <input
                 type="text"
@@ -189,9 +239,7 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
       )}
 
       {/* Login Prompt */}
-      {!currentUser && (
-        <div className="text-xs text-gray-500 text-center pt-2">Sign in to like, comment, and bookmark</div>
-      )}
+      {!user && <div className="text-xs text-gray-500 text-center pt-2">Sign in to like, comment, and bookmark</div>}
     </div>
   )
 }
