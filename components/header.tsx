@@ -13,9 +13,7 @@ export default function Header() {
   const { user, profile, isLoading } = useAuth()
   const router = useRouter()
 
-  useEffect(() => {
-    console.log("[v0] Header auth state:", { user: user?.id, profile: profile?.username, isLoading })
-  }, [user, profile, isLoading])
+  // Removed console.log for production
 
   const handleLogout = async () => {
     const supabase = createClient()

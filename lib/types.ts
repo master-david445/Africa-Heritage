@@ -1,70 +1,88 @@
-export interface User {
-  id: string
-  name: string
-  email: string
-  bio?: string
-  country?: string
-  avatar?: string
-  joinedDate: Date
-  proverbsCount: number
-  followersCount: number
-  followingCount: number
-  points: number
-  badges: Badge[]
-  isAdmin: boolean
-  isVerified: boolean
-  isSuspended: boolean
-}
+import type { Database } from "./database.types"
 
-export interface Badge {
-  id: string
-  name: string
-  description: string
-  icon: string
-}
+// Re-export database types for consistency
+export type { Database }
 
-export interface Proverb {
-  id: string
-  userId: string
-  userName: string
-  userAvatar?: string
+// User types derived from database
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
+export type Proverb = Database["public"]["Tables"]["proverbs"]["Row"] & {
+  profiles: Profile | null
+  likes_count?: number
+  comments_count?: number
+  bookmarks_count?: number
+}
+export type Comment = Database["public"]["Tables"]["comments"]["Row"] & {
+  profiles: Profile | null
+}
+export type Like = Database["public"]["Tables"]["likes"]["Row"]
+export type Bookmark = Database["public"]["Tables"]["bookmarks"]["Row"]
+export type Follow = Database["public"]["Tables"]["follows"]["Row"]
+export type Collection = Database["public"]["Tables"]["collections"]["Row"]
+export type CollectionItem = Database["public"]["Tables"]["collection_items"]["Row"]
+export type Badge = Database["public"]["Tables"]["badges"]["Row"]
+export type UserBadge = Database["public"]["Tables"]["user_badges"]["Row"]
+
+// Form types for validation
+export interface CreateProverbForm {
   proverb: string
   meaning: string
   context?: string
   country: string
   language: string
   categories: string[]
-  audioUrl?: string
-  timestamp: Date
-  likes: string[]
-  comments: Comment[]
-  bookmarks: string[]
-  reactions: Record<string, string[]>
-  views: number
-  shares: number
-  isVerified: boolean
-  isFeatured: boolean
 }
 
-export interface Comment {
-  id: string
-  userId: string
-  userName: string
-  userAvatar?: string
+export interface CreateCommentForm {
   text: string
-  timestamp: Date
-  replies: Comment[]
 }
 
-export interface Collection {
-  id: string
-  userId: string
-  userName: string
-  title: string
-  description?: string
-  coverImage?: string
-  proverbs: string[]
-  isPublic: boolean
-  isCollaborative: boolean
-  contributors: string[]
+export interface UpdateProfileForm {
+  username: string
+  bio?: string
+  country?: string
+}
+
+// API Response types
+export interface ApiResponse<T = any> {
+  data?: T
+  error?: string
+  success: boolean
+}
+
+// Pagination types
+export interface PaginationParams {
+  limit?: number
+  offset?: number
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  hasMore: boolean
+}
+
+// Search types
+export interface SearchFilters {
+  query?: string
+  country?: string
+  language?: string
+  categories?: string[]
+  author?: string
+}
+
+// UI State types
+export interface LoadingState {
+  isLoading: boolean
+  error: string | null
+}
+
+export interface ProverbCardState {
+  isLiked: boolean
+  isBookmarked: boolean
+  likeCount: number
+  commentCount: number
+  showComments: boolean
+  comments: Comment[]
+  isLoading: boolean
+  error: string | null
 }

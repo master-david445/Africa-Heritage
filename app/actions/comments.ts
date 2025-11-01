@@ -1,9 +1,13 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createCommentSchema, CreateCommentInput } from "@/lib/validations"
 
 export async function createComment(proverbId: string, text: string) {
   const supabase = await createClient()
+
+  // Validate input
+  const validatedData: CreateCommentInput = createCommentSchema.parse({ text })
 
   const {
     data: { user },
@@ -18,9 +22,12 @@ export async function createComment(proverbId: string, text: string) {
     .insert({
       proverb_id: proverbId,
       user_id: user.id,
-      text,
+      text: validatedData.text,
     })
-    .select()
+    .select(`
+      *,
+      profiles:user_id(id, username, avatar_url)
+    `)
     .single()
 
   if (error) throw error
