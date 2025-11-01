@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: "African Heritage - Proverb Platform",
   description: "Discover, share, and celebrate African proverbs and wisdom",
   generator: "v0.app",
+  icons: {
+    icon: "/logo.svg",
+  },
 }
 
 export default function RootLayout({

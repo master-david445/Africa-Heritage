@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Menu, X, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
@@ -12,6 +12,10 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { user, profile, isLoading } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    console.log("[v0] Header auth state:", { user: user?.id, profile: profile?.username, isLoading })
+  }, [user, profile, isLoading])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -68,7 +72,8 @@ export default function Header() {
                     <LogOut className="w-4 h-4" />
                   </Button>
                 </div>
-              ) : (
+              ) : !isLoading ? (
+                /* Only show login/signup buttons when NOT loading and user is null */
                 <div className="hidden sm:flex gap-2">
                   <Link href="/auth/login">
                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
@@ -81,7 +86,7 @@ export default function Header() {
                     </Button>
                   </Link>
                 </div>
-              )}
+              ) : null}
 
               {/* Mobile Menu Button */}
               <button className="md:hidden text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>

@@ -1,0 +1,23 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer circle (gold) -->
+  <circle cx="100" cy="100" r="95" fill="#F59E0B" opacity="0.1"/>
+  
+  <!-- Inner decorative circles -->
+  <circle cx="100" cy="100" r="85" fill="none" stroke="#D97706" stroke-width="2"/>
+  
+  <!-- African pattern - inspired by adinkra symbols -->
+  <!-- Center circle -->
+  <circle cx="100" cy="100" r="50" fill="#DC2626"/>
+  
+  <!-- Decorative triangles (kente-inspired) -->
+  <polygon points="100,55 130,85 70,85" fill="#F59E0B"/>
+  <polygon points="100,145 130,115 70,115" fill="#F59E0B"/>
+  <polygon points="55,100 85,130 85,70" fill="#FCD34D"/>
+  <polygon points="145,100 115,130 115,70" fill="#FCD34D"/>
+  
+  <!-- Inner circle with text indicator -->
+  <circle cx="100" cy="100" r="40" fill="#FEF3C7" opacity="0.9"/>
+  
+  <!-- AH initials -->
+  <text x="100" y="110" font-size="28" font-weight="bold" fill="#DC2626" text-anchor="middle" font-family="serif">AH</text>
+</svg>
