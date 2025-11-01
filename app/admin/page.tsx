@@ -1,0 +1,303 @@
+"use client"
+
+import { useAuth } from "@/lib/auth-context"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { AlertCircle, Users, Flag, CheckCircle } from "lucide-react"
+
+interface ReportedContent {
+  id: string
+  type: "proverb" | "comment" | "user"
+  content: string
+  reportedBy: string
+  reason: string
+  timestamp: Date
+  status: "pending" | "reviewed" | "resolved"
+}
+
+interface PlatformStats {
+  totalUsers: number
+  totalProverbs: number
+  totalComments: number
+  activeUsers: number
+  reportedContent: number
+  suspendedUsers: number
+}
+
+export default function AdminDashboard() {
+  const { user } = useAuth()
+  const router = useRouter()
+  const [stats, setStats] = useState<PlatformStats>({
+    totalUsers: 1250,
+    totalProverbs: 3847,
+    totalComments: 12450,
+    activeUsers: 342,
+    reportedContent: 23,
+    suspendedUsers: 5,
+  })
+
+  const [reports, setReports] = useState<ReportedContent[]>([
+    {
+      id: "1",
+      type: "proverb",
+      content: "Offensive proverb content",
+      reportedBy: "user123",
+      reason: "Inappropriate language",
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      status: "pending",
+    },
+    {
+      id: "2",
+      type: "comment",
+      content: "Spam comment",
+      reportedBy: "user456",
+      reason: "Spam",
+      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
+      status: "reviewed",
+    },
+    {
+      id: "3",
+      type: "user",
+      content: "Suspicious user account",
+      reportedBy: "user789",
+      reason: "Suspicious activity",
+      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      status: "resolved",
+    },
+  ])
+
+  useEffect(() => {
+    if (!user?.isAdmin) {
+      router.push("/")
+    }
+  }, [user, router])
+
+  if (!user?.isAdmin) {
+    return null
+  }
+
+  const handleReportAction = (reportId: string, action: "approve" | "reject") => {
+    setReports(
+      reports.map((report) =>
+        report.id === reportId ? { ...report, status: action === "approve" ? "resolved" : "reviewed" } : report,
+      ),
+    )
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800"
+      case "reviewed":
+        return "bg-blue-100 text-blue-800"
+      case "resolved":
+        return "bg-green-100 text-green-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const pendingReports = reports.filter((r) => r.status === "pending").length
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600">Manage platform content, users, and community guidelines</p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <Card className="border-l-4 border-l-orange-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</div>
+              <p className="text-xs text-gray-500 mt-1">Active community members</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-red-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Proverbs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">{stats.totalProverbs.toLocaleString()}</div>
+              <p className="text-xs text-gray-500 mt-1">Shared on platform</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-yellow-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">{stats.activeUsers}</div>
+              <p className="text-xs text-gray-500 mt-1">Last 24 hours</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-orange-600">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600">Reported Content</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">{stats.reportedContent}</div>
+              <p className="text-xs text-gray-500 mt-1">
+                <span className="text-red-600 font-semibold">{pendingReports}</span> pending
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-red-600">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600">Suspended Users</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">{stats.suspendedUsers}</div>
+              <p className="text-xs text-gray-500 mt-1">Policy violations</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-yellow-600">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Comments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">{stats.totalComments.toLocaleString()}</div>
+              <p className="text-xs text-gray-500 mt-1">Community engagement</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Moderation Tabs */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Content Moderation</CardTitle>
+            <CardDescription>Review and manage reported content</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="reports" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="reports">
+                  Reports
+                  {pendingReports > 0 && (
+                    <Badge variant="destructive" className="ml-2">
+                      {pendingReports}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="guidelines">Guidelines</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="reports" className="space-y-4 mt-4">
+                {reports.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                    <p className="text-gray-600">No reports to review</p>
+                  </div>
+                ) : (
+                  reports.map((report) => (
+                    <div key={report.id} className="border rounded-lg p-4 hover:bg-gray-50 transition">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <Flag className="w-5 h-5 text-orange-500" />
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {report.type.charAt(0).toUpperCase() + report.type.slice(1)} Report
+                            </p>
+                            <p className="text-sm text-gray-600">Reported by {report.reportedBy}</p>
+                          </div>
+                        </div>
+                        <Badge className={getStatusColor(report.status)}>{report.status}</Badge>
+                      </div>
+
+                      <div className="mb-3 p-3 bg-gray-50 rounded">
+                        <p className="text-sm text-gray-700">{report.content}</p>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <div>
+                          <p className="text-gray-600">
+                            <span className="font-semibold">Reason:</span> {report.reason}
+                          </p>
+                          <p className="text-gray-500 text-xs mt-1">
+                            {report.timestamp.toLocaleDateString()} {report.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+
+                        {report.status === "pending" && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleReportAction(report.id, "reject")}
+                              className="text-gray-600"
+                            >
+                              Review
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleReportAction(report.id, "approve")}
+                              className="bg-orange-600 hover:bg-orange-700"
+                            >
+                              Resolve
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="users" className="space-y-4 mt-4">
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="font-semibold text-gray-900">User Management</p>
+                      <p className="text-sm text-gray-600">View and manage user accounts</p>
+                    </div>
+                    <Users className="w-8 h-8 text-orange-500" />
+                  </div>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p>Total registered users: {stats.totalUsers}</p>
+                    <p>Active users (24h): {stats.activeUsers}</p>
+                    <p>Suspended accounts: {stats.suspendedUsers}</p>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="guidelines" className="space-y-4 mt-4">
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="font-semibold text-gray-900">Community Guidelines</p>
+                      <p className="text-sm text-gray-600">Platform policies and rules</p>
+                    </div>
+                    <AlertCircle className="w-8 h-8 text-orange-500" />
+                  </div>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li>• Respect cultural and religious diversity</li>
+                    <li>• No hate speech or discrimination</li>
+                    <li>• No spam or promotional content</li>
+                    <li>• Respect intellectual property rights</li>
+                    <li>• No harassment or bullying</li>
+                    <li>• Keep discussions constructive and respectful</li>
+                  </ul>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
