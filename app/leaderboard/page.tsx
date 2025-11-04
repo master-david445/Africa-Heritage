@@ -1,100 +1,48 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Header from "@/components/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Trophy, TrendingUp, Zap } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
-
-interface LeaderboardUser {
-  id: string
-  name: string
-  avatar: string
-  points: number
-  proverbsCount: number
-  followersCount: number
-  rank: number
-  badge?: string
-}
-
-const leaderboardData: LeaderboardUser[] = [
-  {
-    id: "user1",
-    name: "Amara Kofi",
-    avatar: "/placeholder-user.jpg",
-    points: 2450,
-    proverbsCount: 45,
-    followersCount: 542,
-    rank: 1,
-    badge: "Community Champion",
-  },
-  {
-    id: "user5",
-    name: "Zainab Hassan",
-    avatar: "/placeholder-user.jpg",
-    points: 2100,
-    proverbsCount: 38,
-    followersCount: 415,
-    rank: 2,
-    badge: "Top Contributor",
-  },
-  {
-    id: "user3",
-    name: "Kofi Mensah",
-    avatar: "/placeholder-user.jpg",
-    points: 1850,
-    proverbsCount: 32,
-    followersCount: 298,
-    rank: 3,
-  },
-  {
-    id: "user4",
-    name: "Nia Okafor",
-    avatar: "/placeholder-user.jpg",
-    points: 1620,
-    proverbsCount: 28,
-    followersCount: 245,
-    rank: 4,
-  },
-  {
-    id: "user6",
-    name: "Jabari Mwangi",
-    avatar: "/placeholder-user.jpg",
-    points: 1450,
-    proverbsCount: 24,
-    followersCount: 189,
-    rank: 5,
-  },
-  {
-    id: "user7",
-    name: "Adeyemi Adebayo",
-    avatar: "/placeholder-user.jpg",
-    points: 1280,
-    proverbsCount: 21,
-    followersCount: 156,
-    rank: 6,
-  },
-  {
-    id: "user8",
-    name: "Fatima Al-Rashid",
-    avatar: "/placeholder-user.jpg",
-    points: 1100,
-    proverbsCount: 18,
-    followersCount: 134,
-    rank: 7,
-  },
-  {
-    id: "user9",
-    name: "Thabo Ndlela",
-    avatar: "/placeholder-user.jpg",
-    points: 950,
-    proverbsCount: 15,
-    followersCount: 112,
-    rank: 8,
-  },
-]
+import { getLeaderboard, getLeaderboardStats } from "@/app/actions/leaderboard"
+import type { LeaderboardUser } from "@/app/actions/leaderboard"
 
 export default function LeaderboardPage() {
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([])
+  const [stats, setStats] = useState<{
+    totalPoints: number
+    activeUsers: number
+    topContributor: { username: string; points: number } | null
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      try {
+        setLoading(true)
+        setError(null)
+        const [users, statsData] = await Promise.all([
+          getLeaderboard(),
+          getLeaderboardStats()
+        ])
+        setLeaderboardData(users)
+        setStats(statsData)
+      } catch (err) {
+        setError("Failed to load leaderboard")
+        console.error("Error fetching leaderboard:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLeaderboard()
+  }, [])
+
   const getRankColor = (rank: number) => {
     switch (rank) {
       case 1:
@@ -136,37 +84,91 @@ export default function LeaderboardPage() {
 
           {/* Leaderboard Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600">Top Contributor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{leaderboardData[0].name}</div>
-                <p className="text-xs text-gray-500 mt-1">{leaderboardData[0].points} points</p>
-              </CardContent>
-            </Card>
+            {loading ? (
+              <>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <Skeleton className="h-4 w-24" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-20 mb-2" />
+                    <Skeleton className="h-3 w-16" />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <Skeleton className="h-4 w-32" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-24 mb-2" />
+                    <Skeleton className="h-3 w-20" />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <Skeleton className="h-4 w-28" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-16 mb-2" />
+                    <Skeleton className="h-3 w-24" />
+                  </CardContent>
+                </Card>
+              </>
+            ) : error ? (
+              <div className="col-span-3">
+                <Card className="border-red-200">
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-red-600 mb-4">{error}</p>
+                      <Button
+                        onClick={() => window.location.reload()}
+                        variant="outline"
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-gray-600">Top Contributor</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">
+                      {stats?.topContributor?.username || leaderboardData[0]?.username || "No users yet"}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {stats?.topContributor?.points || leaderboardData[0]?.points || 0} points
+                    </p>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Points Distributed</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">
-                  {leaderboardData.reduce((sum, user) => sum + user.points, 0).toLocaleString()}
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Across all users</p>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-gray-600">Total Points Distributed</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">
+                      {stats?.totalPoints.toLocaleString() || leaderboardData.reduce((sum, user) => sum + user.points, 0).toLocaleString()}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Across all users</p>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600">Active Contributors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{leaderboardData.length}</div>
-                <p className="text-xs text-gray-500 mt-1">Top ranked users</p>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-gray-600">Active Contributors</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-600">{stats?.activeUsers || leaderboardData.length}</div>
+                    <p className="text-xs text-gray-500 mt-1">Top ranked users</p>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
 
           {/* Leaderboard Table */}
@@ -177,46 +179,89 @@ export default function LeaderboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {leaderboardData.map((user) => (
-                  <Link key={user.id} href={`/profile/${user.id}`}>
-                    <div
-                      className={`flex items-center justify-between p-4 rounded-lg border transition hover:shadow-md cursor-pointer ${getRankColor(
-                        user.rank,
-                      )}`}
-                    >
+                {loading ? (
+                  // Loading skeletons for leaderboard items
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 rounded-lg border">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white font-bold text-lg">
-                          {getRankIcon(user.rank) || `#${user.rank}`}
-                        </div>
+                        <Skeleton className="w-10 h-10 rounded-full" />
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900">{user.name}</p>
-                          {user.badge && <Badge className="mt-1 bg-orange-600 text-white">{user.badge}</Badge>}
+                          <Skeleton className="h-4 w-24 mb-2" />
+                          <Skeleton className="h-3 w-16" />
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-6 text-right">
+                      <div className="flex items-center gap-6">
                         <div>
-                          <div className="flex items-center gap-1 font-semibold text-gray-900">
-                            <Zap className="w-4 h-4 text-yellow-500" />
-                            {user.points}
-                          </div>
-                          <p className="text-xs text-gray-600">points</p>
+                          <Skeleton className="h-4 w-12 mb-1" />
+                          <Skeleton className="h-3 w-8" />
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900">{user.proverbsCount}</div>
-                          <p className="text-xs text-gray-600">proverbs</p>
+                          <Skeleton className="h-4 w-8 mb-1" />
+                          <Skeleton className="h-3 w-12" />
                         </div>
                         <div>
-                          <div className="flex items-center gap-1 font-semibold text-gray-900">
-                            <TrendingUp className="w-4 h-4 text-orange-600" />
-                            {user.followersCount}
-                          </div>
-                          <p className="text-xs text-gray-600">followers</p>
+                          <Skeleton className="h-4 w-10 mb-1" />
+                          <Skeleton className="h-3 w-14" />
                         </div>
                       </div>
                     </div>
-                  </Link>
-                ))}
+                  ))
+                ) : error ? (
+                  <div className="text-center py-8">
+                    <p className="text-red-600 mb-4">{error}</p>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      variant="outline"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                ) : leaderboardData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No users found. Be the first to contribute!</p>
+                  </div>
+                ) : (
+                  leaderboardData.map((user) => (
+                    <Link key={user.id} href={`/profile/${user.id}`}>
+                      <div
+                        className={`flex items-center justify-between p-4 rounded-lg border transition hover:shadow-md cursor-pointer ${getRankColor(
+                          user.rank,
+                        )}`}
+                      >
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white font-bold text-lg">
+                            {getRankIcon(user.rank) || `#${user.rank}`}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">{user.username}</p>
+                            {user.badge && <Badge className="mt-1 bg-orange-600 text-white">{user.badge}</Badge>}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-6 text-right">
+                          <div>
+                            <div className="flex items-center gap-1 font-semibold text-gray-900">
+                              <Zap className="w-4 h-4 text-yellow-500" />
+                              {user.points}
+                            </div>
+                            <p className="text-xs text-gray-600">points</p>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900">{user.proverbs_count}</div>
+                            <p className="text-xs text-gray-600">proverbs</p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1 font-semibold text-gray-900">
+                              <TrendingUp className="w-4 h-4 text-orange-600" />
+                              {user.followers_count}
+                            </div>
+                            <p className="text-xs text-gray-600">followers</p>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

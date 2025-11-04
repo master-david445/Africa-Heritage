@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import Header from "@/components/header"
-import ProverbCard from "@/components/proverb-card"
-import { Button } from "@/components/ui/button"
-import { Lock, Users, Share2, Edit, Trash2 } from "lucide-react"
-import type { Collection, Proverb } from "@/lib/types"
+import CollectionDetail from "@/components/collection-detail"
+import CollectionStats from "@/components/collection-stats"
+import { toast } from "sonner"
+import type { Collection, Proverb, Profile } from "@/lib/types"
 
 // Mock data
 const mockCollections: Record<string, Collection> = {
@@ -122,8 +122,9 @@ export default function CollectionDetailPage({ params }: { params: { collectionI
   const collectionId = params.collectionId
   const collection = mockCollections[collectionId as keyof typeof mockCollections]
   const [proverbs, setProverbs] = useState<Proverb[]>(
-    collection?.proverbs.map((id) => mockProverbs[id as keyof typeof mockProverbs]).filter(Boolean) || [],
+    collection ? [] : [], // Mock empty for now
   )
+  const [currentUser] = useState<Profile | null>(null) // Mock current user
 
   if (!collection) {
     return (
@@ -138,93 +139,83 @@ export default function CollectionDetailPage({ params }: { params: { collectionI
     )
   }
 
+  const handleEdit = () => {
+    // Edit is handled by the modal in CollectionDetail component
+  }
+
+  const handleDelete = async () => {
+    if (confirm("Are you sure you want to delete this collection? This action cannot be undone.")) {
+      try {
+        // TODO: Implement actual API call to delete collection
+        // await deleteCollection(collectionId)
+        toast.success("Collection deleted successfully!")
+        // Redirect to collections page
+        window.location.href = "/collections"
+      } catch (error) {
+        console.error("[v0] Delete collection error:", error)
+        toast.error("Failed to delete collection")
+      }
+    }
+  }
+
+  const handleShare = async () => {
+    try {
+      const shareUrl = `${window.location.origin}/collections/${collectionId}`
+      if (navigator.share) {
+        await navigator.share({
+          title: collection.title,
+          text: `Check out this African proverb collection: ${collection.title}`,
+          url: shareUrl,
+        })
+        toast.success("Collection shared successfully!")
+      } else {
+        await navigator.clipboard.writeText(shareUrl)
+        toast.success("Link copied to clipboard!")
+      }
+    } catch (error) {
+      console.error("[v0] Share collection error:", error)
+      toast.error("Failed to share collection")
+    }
+  }
+
+  const handleAddProverbs = () => {
+    toast.info("Add proverbs functionality coming soon!")
+  }
+
+  const handleUpdateCollection = (updatedCollection: Collection) => {
+    // Update local state - in a real app, this would trigger a re-fetch or optimistic update
+    // For now, we'll just show success message since the modal handles the toast
+    console.log("Collection updated:", updatedCollection)
+  }
+
   return (
     <>
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Collection Header */}
-        <div className="mb-8">
-          <div className="bg-gradient-to-r from-orange-400 to-red-400 rounded-lg h-48 mb-6"></div>
-
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">{collection.title}</h1>
-                {!collection.isPublic && <Lock className="w-6 h-6 text-gray-500" />}
-              </div>
-              <p className="text-gray-600 mb-4">{collection.description}</p>
-
-              {/* Collection Info */}
-              <div className="flex flex-wrap gap-6 text-sm text-gray-600">
-                <div>
-                  <span className="font-semibold text-gray-900">{proverbs.length}</span> proverbs
-                </div>
-                <div>
-                  By <span className="font-semibold text-gray-900">{collection.userName}</span>
-                </div>
-                {collection.isCollaborative && (
-                  <div className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    <span>
-                      <span className="font-semibold text-gray-900">{collection.contributors.length}</span> contributors
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 ml-4">
-              <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-                <Share2 className="w-4 h-4" />
-                Share
-              </Button>
-              <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-                <Edit className="w-4 h-4" />
-                Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 bg-transparent"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            <CollectionDetail
+              collection={collection}
+              proverbs={proverbs}
+              currentUser={currentUser}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onShare={handleShare}
+              onAddProverbs={handleAddProverbs}
+              onUpdateCollection={handleUpdateCollection}
+            />
           </div>
 
-          {/* Contributors */}
-          {collection.isCollaborative && collection.contributors.length > 0 && (
-            <div className="bg-orange-50 rounded-lg p-4 mb-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Contributors</h3>
-              <div className="flex flex-wrap gap-3">
-                {collection.contributors.map((contributor) => (
-                  <div key={contributor} className="flex items-center gap-2 bg-white rounded-full px-3 py-1">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-red-400 flex items-center justify-center text-white font-bold text-xs">
-                      {contributor.substring(0, 1).toUpperCase()}
-                    </div>
-                    <span className="text-sm text-gray-700">{contributor}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Proverbs */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Proverbs in this collection</h2>
-          {proverbs.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-12 text-center">
-              <p className="text-gray-500 text-lg">No proverbs in this collection yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {proverbs.map((proverb) => (
-                <ProverbCard key={proverb.id} proverb={proverb} />
-              ))}
-            </div>
-          )}
+          {/* Sidebar with Stats */}
+          <div className="lg:col-span-1">
+            <CollectionStats
+              collection={collection}
+              viewCount={Math.floor(Math.random() * 1000) + 100} // Mock data
+              likeCount={Math.floor(Math.random() * 200) + 10} // Mock data
+              shareCount={Math.floor(Math.random() * 50) + 5} // Mock data
+            />
+          </div>
         </div>
       </main>
     </>

@@ -1,122 +1,43 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Header from "@/components/header"
 import ProverbCard from "@/components/proverb-card"
 import { Button } from "@/components/ui/button"
 import { Sparkles, TrendingUp, Heart } from "lucide-react"
+import { getAllProverbs } from "@/app/actions/proverbs"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useAuth } from "@/lib/auth-context"
 import type { Proverb } from "@/lib/types"
-
-// Mock proverbs
-const allProverbs: Proverb[] = [
-  {
-    id: "1",
-    userId: "user1",
-    userName: "Amara Kofi",
-    userAvatar: "/placeholder-user.jpg",
-    proverb: "Se wo were fi na wosankofa a yenkyi",
-    meaning: "It is not wrong to go back for that which you have forgotten.",
-    country: "Ghana",
-    language: "Twi",
-    categories: ["Wisdom", "Learning"],
-    timestamp: new Date(Date.now() - 86400000),
-    likes: ["user2", "user3"],
-    comments: [],
-    bookmarks: ["user4"],
-    reactions: {},
-    views: 234,
-    shares: 12,
-    isVerified: true,
-    isFeatured: false,
-  },
-  {
-    id: "2",
-    userId: "user5",
-    userName: "Zainab Hassan",
-    userAvatar: "/placeholder-user.jpg",
-    proverb: "Ubuntu ngumuntu ngabantu",
-    meaning: "A person is a person through other people.",
-    country: "South Africa",
-    language: "Zulu",
-    categories: ["Community", "Unity"],
-    timestamp: new Date(Date.now() - 172800000),
-    likes: ["user1", "user2", "user3", "user6"],
-    comments: [],
-    bookmarks: ["user2", "user7"],
-    reactions: {},
-    views: 456,
-    shares: 34,
-    isVerified: true,
-    isFeatured: true,
-  },
-  {
-    id: "3",
-    userId: "user8",
-    userName: "Chidi Okafor",
-    userAvatar: "/placeholder-user.jpg",
-    proverb: "A single hand cannot tie a bundle",
-    meaning: "Cooperation and teamwork are essential for success.",
-    country: "Nigeria",
-    language: "Igbo",
-    categories: ["Teamwork", "Success"],
-    timestamp: new Date(Date.now() - 259200000),
-    likes: ["user1", "user3"],
-    comments: [],
-    bookmarks: ["user5", "user9"],
-    reactions: {},
-    views: 189,
-    shares: 8,
-    isVerified: false,
-    isFeatured: false,
-  },
-  {
-    id: "4",
-    userId: "user2",
-    userName: "Kwame Mensah",
-    userAvatar: "/placeholder-user.jpg",
-    proverb: "When the root is deep, there is no reason to fear the wind",
-    meaning: "Strong foundations provide security and stability.",
-    country: "Ghana",
-    language: "Akan",
-    categories: ["Strength", "Foundation"],
-    timestamp: new Date(Date.now() - 345600000),
-    likes: ["user1", "user4", "user5"],
-    comments: [],
-    bookmarks: ["user3"],
-    reactions: {},
-    views: 312,
-    shares: 18,
-    isVerified: true,
-    isFeatured: false,
-  },
-  {
-    id: "5",
-    userId: "user9",
-    userName: "Amina Diallo",
-    userAvatar: "/placeholder-user.jpg",
-    proverb: "The lion does not turn around when a small dog barks",
-    meaning: "Do not be distracted by insignificant matters.",
-    country: "Mali",
-    language: "Bambara",
-    categories: ["Wisdom", "Focus"],
-    timestamp: new Date(Date.now() - 432000000),
-    likes: ["user2", "user6"],
-    comments: [],
-    bookmarks: ["user1", "user8"],
-    reactions: {},
-    views: 267,
-    shares: 15,
-    isVerified: false,
-    isFeatured: false,
-  },
-]
 
 export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState<"featured" | "trending" | "popular">("featured")
+  const [proverbs, setProverbs] = useState<Proverb[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { profile: currentUser } = useAuth()
 
-  const featuredProverbs = allProverbs.filter((p) => p.isFeatured)
-  const trendingProverbs = [...allProverbs].sort((a, b) => b.views - a.views)
-  const popularProverbs = [...allProverbs].sort((a, b) => b.likes.length - a.likes.length)
+  useEffect(() => {
+    async function fetchProverbs() {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await getAllProverbs(50) // Fetch more proverbs for explore page
+        setProverbs(data)
+      } catch (err) {
+        setError("Failed to load proverbs")
+        console.error("Error fetching proverbs:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProverbs()
+  }, [])
+
+  const featuredProverbs = proverbs.filter((p) => p.is_featured)
+  const trendingProverbs = [...proverbs].sort((a, b) => b.views - a.views)
+  const popularProverbs = [...proverbs].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
 
   const displayProverbs =
     activeTab === "featured" ? featuredProverbs : activeTab === "trending" ? trendingProverbs : popularProverbs
@@ -188,12 +109,45 @@ export default function ExplorePage() {
                 : "Popular Proverbs"}
           </h2>
           <div className="space-y-4">
-            {displayProverbs.length === 0 ? (
+            {loading ? (
+              // Loading skeletons
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Skeleton className="w-10 h-10 rounded-full" />
+                    <div>
+                      <Skeleton className="h-4 w-24 mb-1" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-full mb-2" />
+                  <Skeleton className="h-4 w-3/4 mb-4" />
+                  <div className="flex gap-4">
+                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-16" />
+                  </div>
+                </div>
+              ))
+            ) : error ? (
+              <div className="bg-red-50 rounded-lg shadow-md p-12 text-center">
+                <p className="text-red-600 text-lg">{error}</p>
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="mt-4"
+                  variant="outline"
+                >
+                  Try Again
+                </Button>
+              </div>
+            ) : displayProverbs.length === 0 ? (
               <div className="bg-white rounded-lg shadow-md p-12 text-center">
                 <p className="text-gray-500 text-lg">No proverbs in this category yet.</p>
               </div>
             ) : (
-              displayProverbs.map((proverb) => <ProverbCard key={proverb.id} proverb={proverb} />)
+              displayProverbs.map((proverb) => (
+                <ProverbCard key={proverb.id} proverb={proverb} currentUser={currentUser} />
+              ))
             )}
           </div>
         </div>

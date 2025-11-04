@@ -3,7 +3,7 @@ import { toast } from "sonner"
 import { toggleLike, isProverbLikedByUser } from "@/app/actions/likes"
 import { toggleBookmark } from "@/app/actions/bookmarks"
 import { createComment, getProverbComments } from "@/app/actions/comments"
-import type { Proverb, Profile, Comment, ProverbCardState } from "@/lib/types"
+import type { Proverb, Profile, Comment, ProverbCardState, Collection } from "@/lib/types"
 
 export function useProverbCard(proverb: Proverb, currentUser: Profile | null) {
   const [state, setState] = useState<ProverbCardState>({
@@ -16,6 +16,8 @@ export function useProverbCard(proverb: Proverb, currentUser: Profile | null) {
     isLoading: false,
     error: null,
   })
+
+  const [showAddToCollectionModal, setShowAddToCollectionModal] = useState(false)
 
   // Load initial user interactions
   useEffect(() => {
@@ -180,12 +182,71 @@ export function useProverbCard(proverb: Proverb, currentUser: Profile | null) {
     }
   }, [proverb.proverb])
 
+  const handleAddToCollection = useCallback(() => {
+    if (!currentUser) {
+      setState(prev => ({ ...prev, error: "Please log in to add proverbs to collections" }))
+      return
+    }
+    setShowAddToCollectionModal(true)
+  }, [currentUser])
+
+  const handleAddToCollectionSubmit = useCallback(async (collectionId: string) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }))
+
+    try {
+      // TODO: Implement actual API call to add proverb to collection
+      // await addProverbToCollection(proverb.id, collectionId)
+
+      toast.success("Proverb added to collection!")
+      setShowAddToCollectionModal(false)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Error adding proverb to collection"
+      console.error("[v0] Add to collection error:", errorMessage)
+      setState(prev => ({
+        ...prev,
+        error: errorMessage,
+        isLoading: false
+      }))
+      toast.error("Failed to add proverb to collection")
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }))
+    }
+  }, [proverb.id])
+
+  const handleCreateCollection = useCallback(async (collectionData: { title: string; description: string; isPublic: boolean; isCollaborative: boolean }) => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }))
+
+    try {
+      // TODO: Implement actual API call to create collection
+      // const newCollection = await createCollection(collectionData)
+
+      toast.success("Collection created and proverb added!")
+      setShowAddToCollectionModal(false)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Error creating collection"
+      console.error("[v0] Create collection error:", errorMessage)
+      setState(prev => ({
+        ...prev,
+        error: errorMessage,
+        isLoading: false
+      }))
+      toast.error("Failed to create collection")
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }))
+    }
+  }, [])
+
   return {
     ...state,
+    showAddToCollectionModal,
+    setShowAddToCollectionModal,
     handleLike,
     handleBookmark,
     handleToggleComments,
     handleAddComment,
     handleShare,
+    handleAddToCollection,
+    handleAddToCollectionSubmit,
+    handleCreateCollection,
   }
 }

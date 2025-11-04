@@ -5,6 +5,7 @@ import { useProverbCard } from "@/lib/hooks/use-proverb-card"
 import ProverbContent from "@/components/proverb-content"
 import ProverbActions from "@/components/proverb-actions"
 import CommentSection from "@/components/comment-section"
+import AddToCollectionModal from "@/components/add-to-collection-modal"
 import type { Proverb, Profile } from "@/lib/types"
 
 interface ProverbCardProps {
@@ -25,11 +26,16 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
     comments,
     isLoading,
     error,
+    showAddToCollectionModal,
+    setShowAddToCollectionModal,
     handleLike,
     handleBookmark,
     handleToggleComments,
     handleAddComment,
     handleShare,
+    handleAddToCollection,
+    handleAddToCollectionSubmit,
+    handleCreateCollection,
   } = useProverbCard(proverb, currentUser)
 
   return (
@@ -65,6 +71,7 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
         onBookmark={handleBookmark}
         onToggleComments={handleToggleComments}
         onShare={handleShare}
+        onAddToCollection={handleAddToCollection}
       />
 
       {/* Comments Section */}
@@ -77,6 +84,15 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
           onAddComment={handleAddComment}
         />
       )}
+
+      {/* Add to Collection Modal */}
+      <AddToCollectionModal
+        open={showAddToCollectionModal}
+        onOpenChange={setShowAddToCollectionModal}
+        proverb={proverb}
+        onAddToCollection={handleAddToCollectionSubmit}
+        onCreateCollection={handleCreateCollection}
+      />
     </article>
   )
 }

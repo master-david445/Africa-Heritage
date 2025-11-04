@@ -6,6 +6,7 @@ import ProverbCardSkeleton from "@/components/proverb-card-skeleton"
 import SocialStats from "@/components/social-stats"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
+import { getAllProverbs } from "@/app/actions/proverbs"
 import type { Proverb, Profile } from "@/lib/types"
 
 interface ProverbFeedProps {
@@ -16,7 +17,8 @@ interface ProverbFeedProps {
 export default function ProverbFeed({ initialProverbs, currentUser }: ProverbFeedProps) {
   const [proverbs, setProverbs] = useState<Proverb[]>(initialProverbs)
   const [isLoading, setIsLoading] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
+  const [hasMore, setHasMore] = useState(initialProverbs.length === 20)
+  const [error, setError] = useState<string | null>(null)
 
   const handleCreateProverb = () => {
     // This will be connected to a modal for creating proverbs
@@ -27,13 +29,14 @@ export default function ProverbFeed({ initialProverbs, currentUser }: ProverbFee
     if (isLoading || !hasMore) return
 
     setIsLoading(true)
+    setError(null)
     try {
-      // TODO: Implement load more functionality
-      // const newProverbs = await getAllProverbs(20, proverbs.length)
-      // setProverbs(prev => [...prev, ...newProverbs])
-      // setHasMore(newProverbs.length === 20)
+      const newProverbs = await getAllProverbs(20, proverbs.length)
+      setProverbs(prev => [...prev, ...newProverbs])
+      setHasMore(newProverbs.length === 20)
     } catch (error) {
       console.error("[v0] Error loading more proverbs:", error)
+      setError("Failed to load more proverbs. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -86,6 +89,22 @@ export default function ProverbFeed({ initialProverbs, currentUser }: ProverbFee
                         ) : (
                           "Load More"
                         )}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Error Message */}
+                  {error && (
+                    <div className="text-center py-4">
+                      <p className="text-red-600 text-sm">{error}</p>
+                      <Button
+                        onClick={handleLoadMore}
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        aria-label="Retry loading more proverbs"
+                      >
+                        Try Again
                       </Button>
                     </div>
                   )}

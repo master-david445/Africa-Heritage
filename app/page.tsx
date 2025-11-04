@@ -7,7 +7,15 @@ import ProverbFeed from "@/components/proverb-feed"
 export const revalidate = 0
 
 export default async function Home() {
-  const [proverbs, currentUser] = await Promise.all([getAllProverbs(20, 0), getCurrentUser()])
+  let proverbs = []
+  let currentUser = null
+
+  try {
+    [proverbs, currentUser] = await Promise.all([getAllProverbs(20, 0), getCurrentUser()])
+  } catch (error) {
+    console.error("[v0] Error loading initial data:", error)
+    // Continue with empty arrays - the UI will handle empty states
+  }
 
   return (
     <>

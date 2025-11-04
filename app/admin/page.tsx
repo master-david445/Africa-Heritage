@@ -7,76 +7,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { AlertCircle, Users, Flag, CheckCircle } from "lucide-react"
-
-interface ReportedContent {
-  id: string
-  type: "proverb" | "comment" | "user"
-  content: string
-  reportedBy: string
-  reason: string
-  timestamp: Date
-  status: "pending" | "reviewed" | "resolved"
-}
-
-interface PlatformStats {
-  totalUsers: number
-  totalProverbs: number
-  totalComments: number
-  activeUsers: number
-  reportedContent: number
-  suspendedUsers: number
-}
+import { getPlatformStats, getReportedContent, type PlatformStats, type ReportedContent } from "@/app/actions/admin"
 
 export default function AdminDashboard() {
-  const { user } = useAuth()
+  const { profile: user } = useAuth()
   const router = useRouter()
-  const [stats, setStats] = useState<PlatformStats>({
-    totalUsers: 1250,
-    totalProverbs: 3847,
-    totalComments: 12450,
-    activeUsers: 342,
-    reportedContent: 23,
-    suspendedUsers: 5,
-  })
-
-  const [reports, setReports] = useState<ReportedContent[]>([
-    {
-      id: "1",
-      type: "proverb",
-      content: "Offensive proverb content",
-      reportedBy: "user123",
-      reason: "Inappropriate language",
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      status: "pending",
-    },
-    {
-      id: "2",
-      type: "comment",
-      content: "Spam comment",
-      reportedBy: "user456",
-      reason: "Spam",
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
-      status: "reviewed",
-    },
-    {
-      id: "3",
-      type: "user",
-      content: "Suspicious user account",
-      reportedBy: "user789",
-      reason: "Suspicious activity",
-      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      status: "resolved",
-    },
-  ])
+  const [stats, setStats] = useState<PlatformStats | null>(null)
+  const [reports, setReports] = useState<ReportedContent[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user?.isAdmin) {
+    if (!user?.is_admin) {
       router.push("/")
+      return
     }
+
+    async function fetchAdminData() {
+      try {
+        setLoading(true)
+        setError(null)
+        const [statsData, reportsData] = await Promise.all([
+          getPlatformStats(),
+          getReportedContent()
+        ])
+        setStats(statsData)
+        setReports(reportsData)
+      } catch (err) {
+        setError("Failed to load admin data")
+        console.error("Error fetching admin data:", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAdminData()
   }, [user, router])
 
-  if (!user?.isAdmin) {
+  if (!user?.is_admin) {
     return null
   }
 
@@ -113,67 +83,100 @@ export default function AdminDashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <Card className="border-l-4 border-l-orange-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</div>
-              <p className="text-xs text-gray-500 mt-1">Active community members</p>
-            </CardContent>
-          </Card>
+          {loading ? (
+            // Loading skeletons for stats cards
+            Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="pb-3">
+                  <Skeleton className="h-4 w-24" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-3 w-20" />
+                </CardContent>
+              </Card>
+            ))
+          ) : error ? (
+            <div className="col-span-3">
+              <Card className="border-red-200">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-red-600 mb-4">{error}</p>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      variant="outline"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : stats ? (
+            <>
+              <Card className="border-l-4 border-l-orange-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</div>
+                  <p className="text-xs text-gray-500 mt-1">Active community members</p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-l-4 border-l-red-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Proverbs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{stats.totalProverbs.toLocaleString()}</div>
-              <p className="text-xs text-gray-500 mt-1">Shared on platform</p>
-            </CardContent>
-          </Card>
+              <Card className="border-l-4 border-l-red-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600">Total Proverbs</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">{stats.totalProverbs.toLocaleString()}</div>
+                  <p className="text-xs text-gray-500 mt-1">Shared on platform</p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-l-4 border-l-yellow-500">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{stats.activeUsers}</div>
-              <p className="text-xs text-gray-500 mt-1">Last 24 hours</p>
-            </CardContent>
-          </Card>
+              <Card className="border-l-4 border-l-yellow-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">{stats.activeUsers}</div>
+                  <p className="text-xs text-gray-500 mt-1">Last 24 hours</p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-l-4 border-l-orange-600">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Reported Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{stats.reportedContent}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                <span className="text-red-600 font-semibold">{pendingReports}</span> pending
-              </p>
-            </CardContent>
-          </Card>
+              <Card className="border-l-4 border-l-orange-600">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600">Reported Content</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">{stats.reportedContent}</div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    <span className="text-red-600 font-semibold">{pendingReports}</span> pending
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-l-4 border-l-red-600">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Suspended Users</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{stats.suspendedUsers}</div>
-              <p className="text-xs text-gray-500 mt-1">Policy violations</p>
-            </CardContent>
-          </Card>
+              <Card className="border-l-4 border-l-red-600">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600">Suspended Users</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">{stats.suspendedUsers}</div>
+                  <p className="text-xs text-gray-500 mt-1">Policy violations</p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-l-4 border-l-yellow-600">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Comments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{stats.totalComments.toLocaleString()}</div>
-              <p className="text-xs text-gray-500 mt-1">Community engagement</p>
-            </CardContent>
-          </Card>
+              <Card className="border-l-4 border-l-yellow-600">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-600">Total Comments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">{stats.totalComments.toLocaleString()}</div>
+                  <p className="text-xs text-gray-500 mt-1">Community engagement</p>
+                </CardContent>
+              </Card>
+            </>
+          ) : null}
         </div>
 
         {/* Moderation Tabs */}
@@ -229,7 +232,7 @@ export default function AdminDashboard() {
                             <span className="font-semibold">Reason:</span> {report.reason}
                           </p>
                           <p className="text-gray-500 text-xs mt-1">
-                            {report.timestamp.toLocaleDateString()} {report.timestamp.toLocaleTimeString()}
+                            {new Date(report.timestamp).toLocaleDateString()} {new Date(report.timestamp).toLocaleTimeString()}
                           </p>
                         </div>
 
@@ -268,9 +271,9 @@ export default function AdminDashboard() {
                     <Users className="w-8 h-8 text-orange-500" />
                   </div>
                   <div className="space-y-2 text-sm text-gray-600">
-                    <p>Total registered users: {stats.totalUsers}</p>
-                    <p>Active users (24h): {stats.activeUsers}</p>
-                    <p>Suspended accounts: {stats.suspendedUsers}</p>
+                    <p>Total registered users: {stats?.totalUsers || 0}</p>
+                    <p>Active users (24h): {stats?.activeUsers || 0}</p>
+                    <p>Suspended accounts: {stats?.suspendedUsers || 0}</p>
                   </div>
                 </div>
               </TabsContent>

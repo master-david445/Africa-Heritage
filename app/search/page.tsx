@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Search, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ import ProverbCard from "@/components/proverb-card"
 import ProverbCardSkeleton from "@/components/proverb-card-skeleton"
 import { useAuth } from "@/lib/auth-context"
 import { getCurrentUser } from "@/app/actions/profile"
-import { searchProverbs } from "@/app/actions/search"
+import { searchProverbs, getSearchSuggestions } from "@/app/actions/search"
 import type { Proverb, Profile, SearchFilters } from "@/lib/types"
 
 export default function SearchPage() {
@@ -31,6 +31,19 @@ export default function SearchPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+
+  // Suggestions state
+  const [suggestions, setSuggestions] = useState<{
+    categories: string[]
+    countries: string[]
+    languages: string[]
+    authors: string[]
+  }>({ categories: [], countries: [], languages: [], authors: [] })
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const suggestionsRef = useRef<HTMLDivElement>(null)
 
   // Load current user
   useEffect(() => {
@@ -94,8 +107,115 @@ export default function SearchPage() {
     setQuery("")
     setResults([])
     setHasSearched(false)
+    setShowSuggestions(false)
+    setSuggestions({ categories: [], countries: [], languages: [], authors: [] })
     router.replace("/search")
   }
+
+  // Fetch suggestions
+  const fetchSuggestions = async (searchQuery: string) => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setSuggestions({ categories: [], countries: [], languages: [], authors: [] })
+      setShowSuggestions(false)
+      return
+    }
+
+    setIsLoadingSuggestions(true)
+    try {
+      const suggestionResults = await getSearchSuggestions(searchQuery)
+      if (Array.isArray(suggestionResults)) {
+        setSuggestions({ categories: [], countries: [], languages: [], authors: [] })
+      } else {
+        setSuggestions(suggestionResults)
+      }
+      setShowSuggestions(true)
+      setSelectedSuggestionIndex(-1)
+    } catch (error) {
+      console.error("[v0] Error fetching suggestions:", error)
+      setSuggestions({ categories: [], countries: [], languages: [], authors: [] })
+      setShowSuggestions(false)
+    } finally {
+      setIsLoadingSuggestions(false)
+    }
+  }
+
+  // Handle input change with debouncing
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setQuery(value)
+    fetchSuggestions(value)
+  }
+
+  // Get all suggestions as flat array for keyboard navigation
+  const getAllSuggestions = () => {
+    return [
+      ...suggestions.categories.map(cat => ({ type: 'category', value: cat })),
+      ...suggestions.countries.map(country => ({ type: 'country', value: country })),
+      ...suggestions.languages.map(lang => ({ type: 'language', value: lang })),
+      ...suggestions.authors.map(author => ({ type: 'author', value: author })),
+    ]
+  }
+
+  // Handle suggestion selection
+  const selectSuggestion = (suggestion: { type: string, value: string }) => {
+    setQuery(suggestion.value)
+    setShowSuggestions(false)
+    setSelectedSuggestionIndex(-1)
+    // Trigger search
+    const newFilters = { ...filters, query: suggestion.value }
+    setFilters(newFilters)
+    performSearch(newFilters)
+  }
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const allSuggestions = getAllSuggestions()
+
+    if (!showSuggestions || allSuggestions.length === 0) return
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setSelectedSuggestionIndex(prev =>
+          prev < allSuggestions.length - 1 ? prev + 1 : 0
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setSelectedSuggestionIndex(prev =>
+          prev > 0 ? prev - 1 : allSuggestions.length - 1
+        )
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (selectedSuggestionIndex >= 0) {
+          selectSuggestion(allSuggestions[selectedSuggestionIndex])
+        }
+        break
+      case 'Escape':
+        setShowSuggestions(false)
+        setSelectedSuggestionIndex(-1)
+        break
+    }
+  }
+
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node) &&
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false)
+        setSelectedSuggestionIndex(-1)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,18 +229,125 @@ export default function SearchPage() {
 
           {/* Search Form */}
           <form onSubmit={handleSearch} className="flex gap-4">
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <Label htmlFor="search-query" className="sr-only">
                 Search proverbs
               </Label>
               <Input
+                ref={searchInputRef}
                 id="search-query"
                 type="text"
                 placeholder="Search for proverbs, wisdom, or keywords..."
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
                 className="w-full"
               />
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && (
+                <div
+                  ref={suggestionsRef}
+                  className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-md shadow-lg max-h-80 overflow-y-auto mt-1"
+                >
+                  {isLoadingSuggestions ? (
+                    <div className="p-4 text-center text-gray-500">
+                      Loading suggestions...
+                    </div>
+                  ) : getAllSuggestions().length > 0 ? (
+                    <div className="py-2">
+                      {suggestions.categories.length > 0 && (
+                        <div className="px-4 py-2">
+                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                            Categories
+                          </div>
+                          {suggestions.categories.map((category, index) => (
+                            <button
+                              key={`category-${category}`}
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
+                                selectedSuggestionIndex === index ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                              }`}
+                              onClick={() => selectSuggestion({ type: 'category', value: category })}
+                            >
+                              {category}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {suggestions.countries.length > 0 && (
+                        <div className="px-4 py-2 border-t border-gray-100">
+                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                            Countries
+                          </div>
+                          {suggestions.countries.map((country, index) => {
+                            const globalIndex = index + suggestions.categories.length
+                            return (
+                              <button
+                                key={`country-${country}`}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
+                                  selectedSuggestionIndex === globalIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                }`}
+                                onClick={() => selectSuggestion({ type: 'country', value: country })}
+                              >
+                                {country}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {suggestions.languages.length > 0 && (
+                        <div className="px-4 py-2 border-t border-gray-100">
+                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                            Languages
+                          </div>
+                          {suggestions.languages.map((language, index) => {
+                            const globalIndex = index + suggestions.categories.length + suggestions.countries.length
+                            return (
+                              <button
+                                key={`language-${language}`}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
+                                  selectedSuggestionIndex === globalIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                }`}
+                                onClick={() => selectSuggestion({ type: 'language', value: language })}
+                              >
+                                {language}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      {suggestions.authors.length > 0 && (
+                        <div className="px-4 py-2 border-t border-gray-100">
+                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                            Authors
+                          </div>
+                          {suggestions.authors.map((author, index) => {
+                            const globalIndex = index + suggestions.categories.length + suggestions.countries.length + suggestions.languages.length
+                            return (
+                              <button
+                                key={`author-${author}`}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
+                                  selectedSuggestionIndex === globalIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                }`}
+                                onClick={() => selectSuggestion({ type: 'author', value: author })}
+                              >
+                                {author}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500">
+                      No suggestions found
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Searching..." : "Search"}

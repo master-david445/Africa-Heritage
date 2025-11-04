@@ -1,69 +1,76 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Header from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Lock, Users } from "lucide-react"
+import { Plus, Lock, Users, Loader2 } from "lucide-react"
 import Link from "next/link"
+import CreateCollectionModal from "@/components/create-collection-modal"
+import CollectionCard from "@/components/collection-card"
+import { toast } from "sonner"
+import { getUserCollections, createCollection } from "@/app/actions/collections"
 import type { Collection } from "@/lib/types"
 
 // Mock collections data
 const mockCollections: Collection[] = [
   {
     id: "col1",
-    userId: "user1",
-    userName: "Amara Kofi",
+    user_id: "user1",
     title: "Wisdom for Daily Life",
     description: "Essential proverbs that guide us through everyday challenges and decisions.",
-    coverImage: "/placeholder.jpg",
-    proverbs: ["1", "2", "3"],
-    isPublic: true,
-    isCollaborative: false,
+    cover_image: "/placeholder.jpg",
+    is_public: true,
+    is_collaborative: false,
     contributors: ["user1"],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: "col2",
-    userId: "user5",
-    userName: "Zainab Hassan",
+    user_id: "user5",
     title: "Ubuntu Philosophy",
     description: "Proverbs centered around community, unity, and interconnectedness.",
-    coverImage: "/placeholder.jpg",
-    proverbs: ["2", "5"],
-    isPublic: true,
-    isCollaborative: true,
+    cover_image: "/placeholder.jpg",
+    is_public: true,
+    is_collaborative: true,
     contributors: ["user5", "user1", "user3"],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: "col3",
-    userId: "user2",
-    userName: "Kwame Mensah",
+    user_id: "user2",
     title: "Leadership Lessons",
     description: "Proverbs about leadership, strength, and making wise decisions.",
-    coverImage: "/placeholder.jpg",
-    proverbs: ["4"],
-    isPublic: true,
-    isCollaborative: false,
+    cover_image: "/placeholder.jpg",
+    is_public: true,
+    is_collaborative: false,
     contributors: ["user2"],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: "col4",
-    userId: "user8",
-    userName: "Chidi Okafor",
+    user_id: "user8",
     title: "Teamwork & Cooperation",
     description: "Proverbs emphasizing the power of working together.",
-    coverImage: "/placeholder.jpg",
-    proverbs: ["3"],
-    isPublic: false,
-    isCollaborative: true,
+    cover_image: "/placeholder.jpg",
+    is_public: false,
+    is_collaborative: true,
     contributors: ["user8", "user1"],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ]
 
 export default function CollectionsPage() {
-  const [collections, setCollections] = useState(mockCollections)
+  const [collections, setCollections] = useState<Collection[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<"all" | "public" | "collaborative">("all")
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const filteredCollections = collections.filter((col) => {
     const matchesSearch =
@@ -71,10 +78,53 @@ export default function CollectionsPage() {
       col.description?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesFilter =
       filterType === "all" ||
-      (filterType === "public" && col.isPublic) ||
-      (filterType === "collaborative" && col.isCollaborative)
+      (filterType === "public" && col.is_public) ||
+      (filterType === "collaborative" && col.is_collaborative)
     return matchesSearch && matchesFilter
   })
+
+  useEffect(() => {
+    const loadCollections = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        // For now, use mock data since we don't have auth context
+        // In a real app: const collections = await getUserCollections(userId)
+        setCollections(mockCollections)
+      } catch (err) {
+        console.error("[v0] Error loading collections:", err)
+        setError("Failed to load collections")
+        toast.error("Failed to load collections")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadCollections()
+  }, [])
+
+  const handleCreateCollection = async (collectionData: { title: string; description: string; isPublic: boolean; isCollaborative: boolean }) => {
+    try {
+      // In a real app: const newCollection = await createCollection(collectionData)
+      const newCollection: Collection = {
+        id: `col${Date.now()}`,
+        user_id: "user1", // Mock current user
+        title: collectionData.title,
+        description: collectionData.description,
+        cover_image: null,
+        is_public: collectionData.isPublic,
+        is_collaborative: collectionData.isCollaborative,
+        contributors: ["user1"],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      setCollections(prev => [newCollection, ...prev])
+      toast.success("Collection created successfully!")
+    } catch (err) {
+      console.error("[v0] Error creating collection:", err)
+      toast.error("Failed to create collection")
+    }
+  }
 
   return (
     <>
@@ -87,7 +137,10 @@ export default function CollectionsPage() {
               <h1 className="text-3xl font-bold text-gray-900">Collections</h1>
               <p className="text-gray-600 mt-2">Curate and organize proverbs into meaningful collections</p>
             </div>
-            <Button className="bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2"
+            >
               <Plus className="w-4 h-4" />
               Create Collection
             </Button>
@@ -118,54 +171,45 @@ export default function CollectionsPage() {
         </div>
 
         {/* Collections Grid */}
-        {filteredCollections.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+                <div className="h-40 bg-gray-200"></div>
+                <div className="p-6">
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 rounded-lg p-8 text-center">
+            <p className="text-red-600 text-lg mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Try Again
+            </Button>
+          </div>
+        ) : filteredCollections.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
             <p className="text-gray-500 text-lg">No collections found.</p>
+            <p className="text-gray-400 text-sm mt-2">Create your first collection to get started!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCollections.map((collection) => (
-              <Link key={collection.id} href={`/collections/${collection.id}`}>
-                <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer h-full">
-                  {/* Cover Image */}
-                  <div className="h-40 bg-gradient-to-br from-orange-400 to-red-400"></div>
-
-                  {/* Content */}
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-serif text-lg font-bold text-gray-900 flex-1">{collection.title}</h3>
-                      {!collection.isPublic && <Lock className="w-4 h-4 text-gray-500 flex-shrink-0" />}
-                    </div>
-
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{collection.description}</p>
-
-                    {/* Stats */}
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200">
-                      <span>{collection.proverbs.length} proverbs</span>
-                      {collection.isCollaborative && (
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          {collection.contributors.length}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Creator */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-400 flex items-center justify-center text-white font-bold text-xs">
-                        {collection.userName.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className="text-sm">
-                        <div className="font-semibold text-gray-900">By {collection.userName}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <CollectionCard key={collection.id} collection={collection} />
             ))}
           </div>
         )}
       </main>
+
+      <CreateCollectionModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onCreate={handleCreateCollection}
+      />
     </>
   )
 }

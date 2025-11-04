@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Heart, MessageCircle, Bookmark, Share2, Loader2 } from "lucide-react"
+import { Heart, MessageCircle, Bookmark, Share2, Loader2, FolderPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import type { Proverb, Profile } from "@/lib/types"
@@ -20,6 +20,7 @@ interface ProverbActionsProps {
   onBookmark: () => Promise<void>
   onToggleComments: () => void
   onShare: () => void
+  onAddToCollection?: () => void
 }
 
 export default function ProverbActions({
@@ -36,18 +37,23 @@ export default function ProverbActions({
   onBookmark,
   onToggleComments,
   onShare,
+  onAddToCollection,
 }: ProverbActionsProps) {
   const [shareLoading, setShareLoading] = useState(false)
 
   const handleShare = async () => {
+    if (shareLoading) return
+
     setShareLoading(true)
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "African Heritage Proverb",
-          text: proverb.proverb,
-          url: window.location.href,
-        })
+      const shareData = {
+        title: "African Heritage Proverb",
+        text: proverb.proverb,
+        url: window.location.href,
+      }
+
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData)
         toast.success("Proverb shared successfully!")
       } else {
         // Fallback: copy to clipboard
@@ -56,7 +62,11 @@ export default function ProverbActions({
       }
     } catch (err) {
       console.error("[v0] Share error:", err)
-      toast.error("Failed to share proverb")
+      if (err instanceof Error && err.name === "NotAllowedError") {
+        toast.error("Sharing not allowed. Try copying the link instead.")
+      } else {
+        toast.error("Failed to share proverb")
+      }
     } finally {
       setShareLoading(false)
     }
@@ -118,6 +128,18 @@ export default function ProverbActions({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`} />
           )}
         </button>
+
+        {onAddToCollection && (
+          <button
+            onClick={onAddToCollection}
+            disabled={!currentUser}
+            className="flex items-center gap-1 transition hover:text-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded"
+            aria-label="Add to collection"
+          >
+            <FolderPlus className="w-4 h-4" />
+            Add to Collection
+          </button>
+        )}
 
         <button
           onClick={handleShare}
