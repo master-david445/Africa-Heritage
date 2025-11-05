@@ -29,14 +29,22 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Define protected routes that require authentication
+  const protectedRoutes = [
+    "/explore",
+    "/leaderboard",
+    "/admin",
+    "/profile",
+    "/collections"
+  ]
+
+  // Check if the current path is a protected route
+  const isProtectedRoute = protectedRoutes.some(route =>
+    request.nextUrl.pathname.startsWith(route)
+  )
+
   // Redirect unauthenticated users to login if accessing protected routes
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/auth") &&
-    !request.nextUrl.pathname.startsWith("/") &&
-    !request.nextUrl.pathname.startsWith("/search") &&
-    !request.nextUrl.pathname.startsWith("/explore")
-  ) {
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)
