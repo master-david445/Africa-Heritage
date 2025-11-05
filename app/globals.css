@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -38,6 +39,13 @@
   --sidebar-accent-foreground: oklch(0.2 0.02 30);
   --sidebar-border: oklch(0.92 0.01 70);
   --sidebar-ring: oklch(0.58 0.22 41);
+
+  /* Landing page color additions */
+  --deep-green: oklch(0.35 0.15 140);
+  --warm-brown: oklch(0.45 0.12 45);
+  --terracotta-orange: oklch(0.55 0.25 35);
+  --gold-accent: oklch(0.75 0.18 85);
+  --light-beige: oklch(0.95 0.02 70);
 }
 
 .dark {
@@ -73,11 +81,18 @@
   --sidebar-accent-foreground: oklch(0.95 0.01 70);
   --sidebar-border: oklch(0.3 0.02 30);
   --sidebar-ring: oklch(0.65 0.22 41);
+
+  /* Landing page color additions for dark mode */
+  --deep-green: oklch(0.4 0.15 140);
+  --warm-brown: oklch(0.5 0.12 45);
+  --terracotta-orange: oklch(0.6 0.25 35);
+  --gold-accent: oklch(0.8 0.18 85);
+  --light-beige: oklch(0.9 0.02 70);
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-serif: "Georgia", "Garamond", serif;
+  --font-sans: "Montserrat", "Geist", "Geist Fallback";
+  --font-serif: "Playfair Display", "Georgia", "Garamond", serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -115,6 +130,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-deep-green: var(--deep-green);
+  --color-warm-brown: var(--warm-brown);
+  --color-terracotta-orange: var(--terracotta-orange);
+  --color-gold-accent: var(--gold-accent);
+  --color-light-beige: var(--light-beige);
 }
 
 @layer base {
@@ -126,7 +146,161 @@
   }
 }
 
-/* African pattern background */
+/* Typography scales */
+@layer utilities {
+  .text-display-1 {
+    font-family: var(--font-serif);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .text-display-2 {
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .text-heading-1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  .text-heading-2 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .text-heading-3 {
+    font-family: var(--font-sans);
+    font-size: clamp(1.25rem, 2vw, 1.5rem);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .text-body-large {
+    font-family: var(--font-sans);
+    font-size: clamp(1.125rem, 1.5vw, 1.25rem);
+    font-weight: 400;
+    line-height: 1.6;
+  }
+
+  .text-body {
+    font-family: var(--font-sans);
+    font-size: clamp(1rem, 1.25vw, 1.125rem);
+    font-weight: 400;
+    line-height: 1.6;
+  }
+
+  .text-body-small {
+    font-family: var(--font-sans);
+    font-size: clamp(0.875rem, 1vw, 1rem);
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  .text-proverb-quote {
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    font-weight: 500;
+    line-height: 1.4;
+    font-style: italic;
+  }
+
+  .text-caption {
+    font-family: var(--font-sans);
+    font-size: clamp(0.75rem, 0.8vw, 0.875rem);
+    font-weight: 500;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+/* Landing page specific utilities */
+@layer utilities {
+  .hero-background {
+    background: linear-gradient(135deg, var(--deep-green) 0%, var(--warm-brown) 50%, var(--terracotta-orange) 100%);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+
+  .hero-overlay {
+    background: linear-gradient(45deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
+  }
+
+  .parallax-element {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.8s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.8s ease-out forwards;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+    }
+  }
+}
+
+/* Cultural pattern utilities */
 @layer utilities {
   .pattern-kente {
     background-image: repeating-linear-gradient(
@@ -145,7 +319,36 @@
       );
   }
 
+  .pattern-adinkra {
+    background-image:
+      radial-gradient(circle at 25% 25%, var(--gold-accent) 2px, transparent 2px),
+      radial-gradient(circle at 75% 75%, var(--terracotta-orange) 2px, transparent 2px);
+    background-size: 20px 20px;
+    opacity: 0.1;
+  }
+
+  .pattern-mud-cloth {
+    background-image:
+      repeating-linear-gradient(45deg, transparent, transparent 10px, var(--warm-brown) 10px, var(--warm-brown) 11px),
+      repeating-linear-gradient(-45deg, transparent, transparent 10px, var(--deep-green) 10px, var(--deep-green) 11px);
+    background-size: 20px 20px;
+    opacity: 0.08;
+  }
+
   .gradient-african {
     background: linear-gradient(135deg, oklch(0.58 0.22 41) 0%, oklch(0.65 0.2 25) 50%, oklch(0.72 0.18 85) 100%);
+  }
+
+  .gradient-heritage {
+    background: linear-gradient(135deg, var(--deep-green) 0%, var(--warm-brown) 30%, var(--terracotta-orange) 70%, var(--gold-accent) 100%);
+  }
+
+  .text-shadow-heritage {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .border-heritage {
+    border: 2px solid var(--gold-accent);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
   }
 }
