@@ -44,6 +44,9 @@ export default function Header() {
               <Link href="/explore" className="hover:opacity-80 transition">
                 Explore
               </Link>
+              <Link href="/ask" className="hover:opacity-80 transition">
+                Ask Question
+              </Link>
               <Link href="/search" className="hover:opacity-80 transition">
                 Search
               </Link>
@@ -104,6 +107,9 @@ export default function Header() {
                 </Link>
                 <Link href="/explore" className="hover:opacity-80 transition">
                   Explore
+                </Link>
+                <Link href="/ask" className="hover:opacity-80 transition">
+                  Ask Question
                 </Link>
                 <Link href="/search" className="hover:opacity-80 transition">
                   Search

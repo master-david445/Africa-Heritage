@@ -35,7 +35,9 @@ export async function middleware(request: NextRequest) {
     "/leaderboard",
     "/admin",
     "/profile",
-    "/collections"
+    "/collections",
+    "/search",
+    "/ask"
   ]
 
   // Check if the current path is a protected route
