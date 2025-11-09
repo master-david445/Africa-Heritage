@@ -42,19 +42,57 @@ export async function toggleFollow(followingId: string) {
 export async function getUserFollowers(userId: string) {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.from("follows").select(`profiles:follower_id(*)`).eq("following_id", userId)
+  const { data, error } = await supabase
+    .from("follows")
+    .select(`
+      profiles:follower_id(
+        id,
+        username,
+        email,
+        bio,
+        country,
+        avatar_url,
+        points,
+        reputation_score,
+        is_admin,
+        is_verified,
+        is_suspended,
+        created_at,
+        updated_at
+      )
+    `)
+    .eq("following_id", userId)
 
   if (error) throw error
-  return data
+  return data?.map(item => item.profiles).filter(Boolean) || []
 }
 
 export async function getUserFollowing(userId: string) {
   const supabase = await createClient()
 
-  const { data, error } = await supabase.from("follows").select(`profiles:following_id(*)`).eq("follower_id", userId)
+  const { data, error } = await supabase
+    .from("follows")
+    .select(`
+      profiles:following_id(
+        id,
+        username,
+        email,
+        bio,
+        country,
+        avatar_url,
+        points,
+        reputation_score,
+        is_admin,
+        is_verified,
+        is_suspended,
+        created_at,
+        updated_at
+      )
+    `)
+    .eq("follower_id", userId)
 
   if (error) throw error
-  return data
+  return data?.map(item => item.profiles).filter(Boolean) || []
 }
 
 export async function isFollowing(followingId: string) {

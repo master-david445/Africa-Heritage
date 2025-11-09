@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Header from "@/components/header"
 import UserProfileCard from "@/components/user-profile-card"
 import FollowersList from "@/components/followers-list"
@@ -8,118 +8,106 @@ import ProverbCard from "@/components/proverb-card"
 import BadgeShowcase from "@/components/badge-showcase"
 import PointsTracker from "@/components/points-tracker"
 import { useAuth } from "@/lib/auth-context"
-import type { User, Proverb } from "@/lib/types"
-
-// Mock user data
-const mockUsers: Record<string, User> = {
-  user1: {
-    id: "user1",
-    name: "Amara Kofi",
-    email: "amara@example.com",
-    bio: "Passionate about preserving African wisdom and culture",
-    country: "Ghana",
-    avatar: "/placeholder-user.jpg",
-    joinedDate: new Date("2023-01-15"),
-    proverbsCount: 24,
-    followersCount: 342,
-    followingCount: 128,
-    points: 1250,
-    badges: [
-      { id: "b1", name: "Contributor", description: "Shared 10+ proverbs", icon: "🌟" },
-      { id: "b2", name: "Community Leader", description: "500+ followers", icon: "👑" },
-    ],
-    isAdmin: false,
-    isVerified: true,
-    isSuspended: false,
-  },
-  user2: {
-    id: "user2",
-    name: "Kwame Mensah",
-    email: "kwame@example.com",
-    bio: "Collector of West African proverbs",
-    country: "Ghana",
-    avatar: "/placeholder-user.jpg",
-    joinedDate: new Date("2023-03-20"),
-    proverbsCount: 15,
-    followersCount: 89,
-    followingCount: 45,
-    points: 650,
-    badges: [],
-    isAdmin: false,
-    isVerified: false,
-    isSuspended: false,
-  },
-  user5: {
-    id: "user5",
-    name: "Zainab Hassan",
-    email: "zainab@example.com",
-    bio: "Documenting East African wisdom traditions",
-    country: "Kenya",
-    avatar: "/placeholder-user.jpg",
-    joinedDate: new Date("2023-02-10"),
-    proverbsCount: 31,
-    followersCount: 215,
-    followingCount: 92,
-    points: 1100,
-    badges: [{ id: "b3", name: "Top Contributor", description: "30+ proverbs shared", icon: "🏆" }],
-    isAdmin: false,
-    isVerified: true,
-    isSuspended: false,
-  },
-}
-
-// Mock proverbs for user
-const mockUserProverbs: Record<string, Proverb[]> = {
-  user1: [
-    {
-      id: "1",
-      userId: "user1",
-      userName: "Amara Kofi",
-      userAvatar: "/placeholder-user.jpg",
-      proverb: "Se wo were fi na wosankofa a yenkyi",
-      meaning: "It is not wrong to go back for that which you have forgotten.",
-      country: "Ghana",
-      language: "Twi",
-      categories: ["Wisdom", "Learning"],
-      timestamp: new Date(Date.now() - 86400000),
-      likes: ["user2", "user3"],
-      comments: [],
-      bookmarks: ["user4"],
-      reactions: {},
-      views: 234,
-      shares: 12,
-      isVerified: true,
-      isFeatured: false,
-    },
-  ],
-}
-
-// Mock followers/following
-const mockFollowers: Record<string, User[]> = {
-  user1: [mockUsers.user2, mockUsers.user5],
-}
-
-const mockFollowing: Record<string, User[]> = {
-  user1: [mockUsers.user5],
-}
+import { getUserProfile, getProfileStats } from "@/app/actions/profile"
+import { getProverbsByUser } from "@/app/actions/proverbs"
+import { getUserFollowers, getUserFollowing } from "@/app/actions/follows"
+import type { Profile, Proverb } from "@/lib/types"
 
 export default function ProfilePage({ params }: { params: { userId: string } }) {
   const { user: currentUser } = useAuth()
   const userId = params.userId
-  const profileUser = mockUsers[userId as keyof typeof mockUsers]
-  const userProverbs = mockUserProverbs[userId as keyof typeof mockUserProverbs] || []
-  const followers = mockFollowers[userId as keyof typeof mockFollowers] || []
-  const following = mockFollowing[userId as keyof typeof mockFollowing] || []
 
+  const [profileUser, setProfileUser] = useState<Profile | null>(null)
+  const [userProverbs, setUserProverbs] = useState<Proverb[]>([])
+  const [followers, setFollowers] = useState<any[]>([])
+  const [following, setFollowing] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"proverbs" | "followers" | "following" | "achievements">("proverbs")
 
-  if (!profileUser) {
+  useEffect(() => {
+    async function loadProfileData() {
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Load profile data
+        const profile = await getUserProfile(userId)
+        if (!profile) {
+          setError("User not found")
+          return
+        }
+        setProfileUser(profile)
+
+        // Load stats and update profile with counts
+        const stats = await getProfileStats(userId)
+        setProfileUser(prev => prev ? { ...prev, ...stats } : null)
+
+        // Load user's proverbs/questions
+        const proverbs = await getProverbsByUser(userId)
+        setUserProverbs(proverbs)
+
+        // Load followers and following
+        const [followersData, followingData] = await Promise.all([
+          getUserFollowers(userId),
+          getUserFollowing(userId)
+        ])
+        setFollowers(followersData || [])
+        setFollowing(followingData || [])
+
+      } catch (err) {
+        console.error("Error loading profile:", err)
+        setError("Failed to load profile")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (userId) {
+      loadProfileData()
+    }
+  }, [userId])
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                  <div className="h-32 bg-gray-200"></div>
+                  <div className="px-6 pb-6">
+                    <div className="flex items-end gap-4 -mt-16 mb-4">
+                      <div className="w-24 h-24 rounded-full bg-gray-200"></div>
+                      <div className="flex-1">
+                        <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="lg:col-span-2">
+                <div className="h-96 bg-white rounded-lg shadow-md"></div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </>
+    )
+  }
+
+  if (error || !profileUser) {
     return (
       <>
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">User not found</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {error || "User not found"}
+            </h1>
           </div>
         </main>
       </>
@@ -127,6 +115,25 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
   }
 
   const isOwnProfile = currentUser?.id === userId
+
+  // Convert Profile to User format expected by components
+  const userForComponents = {
+    id: profileUser.id,
+    name: profileUser.username,
+    email: profileUser.email || "",
+    bio: profileUser.bio || undefined,
+    country: profileUser.country || undefined,
+    avatar: profileUser.avatar_url || "/placeholder-user.jpg",
+    joinedDate: new Date(profileUser.created_at),
+    proverbsCount: (profileUser as any).proverbsCount || 0,
+    followersCount: (profileUser as any).followersCount || 0,
+    followingCount: (profileUser as any).followingCount || 0,
+    points: profileUser.points,
+    badges: [], // TODO: Implement badge system
+    isAdmin: profileUser.is_admin,
+    isVerified: profileUser.is_verified,
+    isSuspended: profileUser.is_suspended,
+  }
 
   return (
     <>
@@ -194,10 +201,37 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
               <div className="space-y-4">
                 {userProverbs.length === 0 ? (
                   <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                    <p className="text-gray-500">No proverbs shared yet</p>
+                    <p className="text-gray-500">
+                      {isOwnProfile ? "You haven't shared any proverbs yet" : "No proverbs shared yet"}
+                    </p>
+                    {isOwnProfile && (
+                      <p className="text-sm text-gray-400 mt-2">
+                        Click "Ask Question" to share your first proverb!
+                      </p>
+                    )}
                   </div>
                 ) : (
-                  userProverbs.map((proverb) => <ProverbCard key={proverb.id} proverb={proverb} />)
+                  userProverbs.map((proverb) => (
+                    <ProverbCard
+                      key={proverb.id}
+                      proverb={proverb}
+                      currentUser={currentUser ? {
+                        id: currentUser.id,
+                        username: currentUser.email?.split('@')[0] || 'user',
+                        email: currentUser.email || '',
+                        bio: null,
+                        country: null,
+                        avatar_url: null,
+                        points: 0,
+                        reputation_score: 0,
+                        is_admin: false,
+                        is_verified: false,
+                        is_suspended: false,
+                        created_at: '',
+                        updated_at: ''
+                      } : null}
+                    />
+                  ))
                 )}
               </div>
             )}
@@ -207,7 +241,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
             {activeTab === "following" && <FollowersList users={following} title="Following" />}
 
             {activeTab === "achievements" && (
-              <BadgeShowcase badges={profileUser.badges} userPoints={profileUser.points} />
+              <BadgeShowcase badges={userForComponents.badges} userPoints={profileUser.points} />
             )}
           </div>
         </div>
