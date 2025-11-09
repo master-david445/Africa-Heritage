@@ -53,6 +53,11 @@ export default function Header() {
               <Link href="/leaderboard" className="hover:opacity-80 transition">
                 Leaderboard
               </Link>
+              {user && profile && (
+                <Link href={`/profile/${user.id}`} className="hover:opacity-80 transition">
+                  My Profile
+                </Link>
+              )}
               {profile?.is_admin && (
                 <Link href="/admin" className="hover:opacity-80 transition font-semibold">
                   Admin
