@@ -3,11 +3,11 @@ import { z } from "zod"
 // Proverb validation schemas
 export const createProverbSchema = z.object({
   proverb: z.string().min(1, "Proverb is required").max(1000, "Proverb must be less than 1000 characters"),
-  meaning: z.string().min(1, "Meaning is required").max(2000, "Meaning must be less than 2000 characters"),
+  meaning: z.string().max(2000, "Meaning must be less than 2000 characters").optional(),
   context: z.string().max(1000, "Context must be less than 1000 characters").optional(),
   country: z.string().min(1, "Country is required"),
   language: z.string().min(1, "Language is required"),
-  categories: z.array(z.string()).min(1, "At least one category is required").max(10, "Maximum 10 categories allowed"),
+  categories: z.array(z.string()).min(0).max(10, "Maximum 10 categories allowed"),
 })
 
 export const updateProverbSchema = z.object({

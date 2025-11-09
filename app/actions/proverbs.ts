@@ -17,6 +17,34 @@ export async function createProverb(formData: CreateProverbInput) {
     throw new Error("Unauthorized")
   }
 
+  // Check if user profile exists, create if not
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .single()
+
+  if (!profile) {
+    // Create profile if it doesn't exist
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: user.id,
+        username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
+        email: user.email || '',
+        points: 0,
+        reputation_score: 0,
+        is_admin: false,
+        is_verified: false,
+        is_suspended: false,
+      })
+
+    if (profileError) {
+      console.error("Profile creation error:", profileError)
+      // Continue anyway, as the insert might still work
+    }
+  }
+
   const { data, error } = await supabase
     .from("proverbs")
     .insert({
@@ -27,11 +55,17 @@ export async function createProverb(formData: CreateProverbInput) {
       country: validatedData.country,
       language: validatedData.language,
       categories: validatedData.categories,
+      answer_count: 0,
+      follower_count: 0,
     })
     .select()
     .single()
 
-  if (error) throw error
+  if (error) {
+    console.error("Proverb creation error:", error)
+    throw error
+  }
+
   return data
 }
 

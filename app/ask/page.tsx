@@ -56,8 +56,18 @@ export default function AskPage() {
       return
     }
 
-    if (!formData.proverb.trim() || !formData.meaning.trim()) {
-      toast.error("Please fill in the proverb and its meaning")
+    if (!formData.proverb.trim()) {
+      toast.error("Please enter the proverb text")
+      return
+    }
+
+    if (!formData.country.trim()) {
+      toast.error("Please enter the country of origin")
+      return
+    }
+
+    if (!formData.language.trim()) {
+      toast.error("Please enter the language")
       return
     }
 
