@@ -25,17 +25,28 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      console.log("[LOGIN] Attempting login for:", email)
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (authError) throw authError
+      if (authError) {
+        console.error("[LOGIN] Auth error:", authError)
+        throw authError
+      }
+
+      console.log("[LOGIN] Login successful, user:", data.user?.id)
+      console.log("[LOGIN] Session:", data.session ? "exists" : "null")
+
+      // Wait a moment for auth state to propagate
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       // Redirect to home after successful login
       router.push("/")
       router.refresh()
     } catch (error: unknown) {
+      console.error("[LOGIN] Login failed:", error)
       setError(error instanceof Error ? error.message : "An error occurred during login")
     } finally {
       setIsLoading(false)
