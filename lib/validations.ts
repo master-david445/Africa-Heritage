@@ -62,3 +62,39 @@ export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type CreateCollectionInput = z.infer<typeof createCollectionSchema>
 export type SearchProverbsInput = z.infer<typeof searchProverbsSchema>
 export type PaginationInput = z.infer<typeof paginationSchema>
+
+// Answer validation schemas
+export const createAnswerSchema = z.object({
+  content: z.string().min(10, "Answer must be at least 10 characters").max(10000, "Answer must be less than 10000 characters"),
+})
+
+export const updateAnswerSchema = z.object({
+  content: z.string().min(10, "Answer must be at least 10 characters").max(10000, "Answer must be less than 10000 characters"),
+})
+
+// Vote validation schemas
+export const voteSchema = z.object({
+  answer_id: z.string().uuid(),
+  vote_type: z.enum(["upvote", "downvote"]),
+})
+
+// Question follow validation
+export const questionFollowSchema = z.object({
+  question_id: z.string().uuid(),
+})
+
+// Notification validation
+export const createNotificationSchema = z.object({
+  user_id: z.string().uuid(),
+  type: z.string(),
+  title: z.string().min(1).max(255),
+  message: z.string().optional(),
+  related_id: z.string().uuid().optional(),
+})
+
+// Type exports
+export type CreateAnswerInput = z.infer<typeof createAnswerSchema>
+export type UpdateAnswerInput = z.infer<typeof updateAnswerSchema>
+export type VoteInput = z.infer<typeof voteSchema>
+export type QuestionFollowInput = z.infer<typeof questionFollowSchema>
+export type CreateNotificationInput = z.infer<typeof createNotificationSchema>

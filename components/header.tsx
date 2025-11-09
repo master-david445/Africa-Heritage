@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import NotificationBell from "@/components/notification-bell"
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -60,6 +61,7 @@ export default function Header() {
             <div className="flex items-center gap-2">
               {!isLoading && user && profile ? (
                 <div className="flex items-center gap-3">
+                  <NotificationBell />
                   <span className="hidden sm:inline text-sm">{profile.username}</span>
                   <Link href={`/profile/${user.id}`}>
                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">

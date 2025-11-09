@@ -22,6 +22,23 @@ export type CollectionItem = Database["public"]["Tables"]["collection_items"]["R
 export type Badge = Database["public"]["Tables"]["badges"]["Row"]
 export type UserBadge = Database["public"]["Tables"]["user_badges"]["Row"]
 
+// New types for Quora-like format
+export type Answer = Database["public"]["Tables"]["answers"]["Row"] & {
+  profiles: Profile | null
+  user_vote?: "upvote" | "downvote" | null
+}
+export type Vote = Database["public"]["Tables"]["votes"]["Row"]
+export type QuestionFollow = Database["public"]["Tables"]["question_follows"]["Row"]
+export type Notification = Database["public"]["Tables"]["notifications"]["Row"]
+
+// Extended Proverb type for questions
+export type Question = Database["public"]["Tables"]["proverbs"]["Row"] & {
+  profiles: Profile | null
+  answer_count?: number
+  follower_count?: number
+  answers?: Answer[]
+}
+
 // Form types for validation
 export interface CreateProverbForm {
   proverb: string

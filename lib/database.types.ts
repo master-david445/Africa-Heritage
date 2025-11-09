@@ -10,6 +10,7 @@ export type Database = {
           country: string | null
           avatar_url: string | null
           points: number
+          reputation_score: number
           is_admin: boolean
           is_verified: boolean
           is_suspended: boolean
@@ -130,6 +131,55 @@ export type Database = {
         }
         Insert: Omit<Database["public"]["Tables"]["user_badges"]["Row"], "id" | "earned_at">
         Update: never
+      }
+      answers: {
+        Row: {
+          id: string
+          question_id: string
+          user_id: string
+          content: string
+          vote_count: number
+          is_accepted: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["answers"]["Row"], "id" | "created_at" | "updated_at">
+        Update: Partial<Database["public"]["Tables"]["answers"]["Row"]>
+      }
+      votes: {
+        Row: {
+          id: string
+          user_id: string
+          answer_id: string
+          vote_type: string
+          created_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["votes"]["Row"], "id" | "created_at">
+        Update: never
+      }
+      question_follows: {
+        Row: {
+          id: string
+          user_id: string
+          question_id: string
+          created_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["question_follows"]["Row"], "id" | "created_at">
+        Update: never
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          message: string | null
+          related_id: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: Omit<Database["public"]["Tables"]["notifications"]["Row"], "id" | "created_at">
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>
       }
     }
   }
