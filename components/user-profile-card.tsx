@@ -2,27 +2,21 @@
 
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
-import type { User } from "@/lib/types"
+import type { Profile } from "@/lib/types"
 import { MapPin, Calendar, Award } from "lucide-react"
 
 interface UserProfileCardProps {
-  user: User
+  user: Profile & {
+    proverbsCount?: number
+    followersCount?: number
+    followingCount?: number
+  }
   isOwnProfile?: boolean
   onFollowChange?: () => void
 }
 
 export default function UserProfileCard({ user, isOwnProfile = false, onFollowChange }: UserProfileCardProps) {
-  const { user: currentUser, followUser, unfollowUser, isFollowing } = useAuth()
-  const following = isFollowing(user.id)
-
-  const handleFollowToggle = () => {
-    if (following) {
-      unfollowUser(user.id)
-    } else {
-      followUser(user.id)
-    }
-    onFollowChange?.()
-  }
+  const { user: currentUser } = useAuth()
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -34,26 +28,15 @@ export default function UserProfileCard({ user, isOwnProfile = false, onFollowCh
         {/* Avatar */}
         <div className="flex items-end gap-4 -mt-16 mb-4">
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-red-400 border-4 border-white flex items-center justify-center text-white font-bold text-2xl">
-            {user.name.substring(0, 2).toUpperCase()}
+            {user.username.substring(0, 2).toUpperCase()}
           </div>
-          {!isOwnProfile && currentUser && currentUser.id !== user.id && (
-            <Button
-              onClick={handleFollowToggle}
-              className={`ml-auto ${
-                following
-                  ? "bg-gray-200 text-gray-900 hover:bg-gray-300"
-                  : "bg-orange-600 text-white hover:bg-orange-700"
-              }`}
-            >
-              {following ? "Following" : "Follow"}
-            </Button>
-          )}
         </div>
 
         {/* User Info */}
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-          {user.isVerified && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Verified</span>}
+          <h1 className="text-2xl font-bold text-gray-900">{user.username}</h1>
+          {user.is_verified && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded ml-2">Verified</span>}
+          {user.is_admin && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded ml-2">Admin</span>}
         </div>
 
         {/* Bio */}
@@ -69,7 +52,7 @@ export default function UserProfileCard({ user, isOwnProfile = false, onFollowCh
           )}
           <div className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
-            Joined {new Date(user.joinedDate).toLocaleDateString()}
+            Joined {new Date(user.created_at).toLocaleDateString()}
           </div>
         </div>
 
@@ -89,22 +72,16 @@ export default function UserProfileCard({ user, isOwnProfile = false, onFollowCh
           </div>
         </div>
 
-        {/* Badges */}
-        {user.badges.length > 0 && (
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-              <Award className="w-4 h-4" />
-              Badges
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {user.badges.map((badge) => (
-                <div key={badge.id} className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
-                  {badge.name}
-                </div>
-              ))}
+        {/* Reputation Score */}
+        <div className="mt-4 p-3 bg-orange-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-orange-600" />
+              <span className="font-semibold text-gray-900">Reputation</span>
             </div>
+            <span className="text-lg font-bold text-orange-600">{user.reputation_score}</span>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

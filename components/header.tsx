@@ -117,6 +117,11 @@ export default function Header() {
                 <Link href="/leaderboard" className="hover:opacity-80 transition">
                   Leaderboard
                 </Link>
+                {user && profile && (
+                  <Link href={`/profile/${user.id}`} className="hover:opacity-80 transition">
+                    My Profile
+                  </Link>
+                )}
                 {!isLoading && !user && (
                   <div className="flex gap-2 pt-2">
                     <Link href="/auth/login" className="flex-1">
