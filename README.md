@@ -423,7 +423,7 @@ export async function createClient() {
 1. **Sign Up**: Create an account with email and password
 2. **Complete Profile**: Add bio, country, and avatar
 3. **Explore Proverbs**: Browse featured, trending, and popular content
-4. **Ask Questions**: Post questions about proverb meanings
+4. **Share Proverbs**: Post proverbs and their meanings
 5. **Provide Answers**: Share your insights and interpretations
 6. **Build Collections**: Save favorite proverbs for later reference
 

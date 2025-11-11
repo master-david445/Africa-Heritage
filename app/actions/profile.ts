@@ -28,6 +28,15 @@ export async function getUserProfile(username: string) {
   return data
 }
 
+export async function getUserProfileById(userId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+
+  if (error) throw error
+  return data
+}
+
 export async function updateProfile(updates: {
   username?: string
   bio?: string

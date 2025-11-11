@@ -29,6 +29,15 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    "/",
+    "/landing",
+    "/auth/login",
+    "/auth/sign-up",
+    "/auth/sign-up-success"
+  ]
+
   // Define protected routes that require authentication
   const protectedRoutes = [
     "/explore",
@@ -37,7 +46,7 @@ export async function middleware(request: NextRequest) {
     "/profile",
     "/collections",
     "/search",
-    "/ask"
+    "/share"
   ]
 
   // Check if the current path is a protected route
@@ -45,8 +54,14 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   )
 
+  // Check if the current path is a public route
+  const isPublicRoute = publicRoutes.some(route =>
+    request.nextUrl.pathname === route
+  )
+
   // Redirect unauthenticated users to login if accessing protected routes
-  if (!user && isProtectedRoute) {
+  // that are not explicitly marked as public
+  if (!user && isProtectedRoute && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)

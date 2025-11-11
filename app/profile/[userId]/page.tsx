@@ -8,7 +8,7 @@ import ProverbCard from "@/components/proverb-card"
 import BadgeShowcase from "@/components/badge-showcase"
 import PointsTracker from "@/components/points-tracker"
 import { useAuth } from "@/lib/auth-context"
-import { getUserProfile, getProfileStats } from "@/app/actions/profile"
+import { getUserProfileById, getProfileStats } from "@/app/actions/profile"
 import { getProverbsByUser } from "@/app/actions/proverbs"
 import { getUserFollowers, getUserFollowing } from "@/app/actions/follows"
 import type { Profile, Proverb } from "@/lib/types"
@@ -32,7 +32,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
         setError(null)
 
         // Load profile data
-        const profile = await getUserProfile(userId)
+        const profile = await getUserProfileById(userId)
         if (!profile) {
           setError("User not found")
           return
@@ -206,7 +206,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
                     </p>
                     {isOwnProfile && (
                       <p className="text-sm text-gray-400 mt-2">
-                        Click "Ask Question" to share your first proverb!
+                        Click "Share Proverb" to share your first proverb!
                       </p>
                     )}
                   </div>
