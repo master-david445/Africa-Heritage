@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import type { Database } from "@/lib/database.types"
 
+// Mobile detection utility
+const isMobile = () => {
+  if (typeof window === 'undefined') return false
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
 type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 
 interface AuthContextType {
@@ -27,15 +33,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
 
       if (error) {
-        console.log("[v0] Profile fetch error:", error.message)
+        console.log("[AUTH] Profile fetch error:", error.message)
+        // On mobile, retry once after a short delay
+        if (isMobile()) {
+          console.log("[AUTH] Retrying profile fetch on mobile...")
+          await new Promise(resolve => setTimeout(resolve, 500))
+          const retry = await supabase.from("profiles").select("*").eq("id", userId).single()
+          if (!retry.error) {
+            console.log("[AUTH] Profile loaded on retry:", retry.data)
+            setProfile(retry.data)
+            return
+          }
+        }
         setProfile(null)
         return
       }
 
-      console.log("[v0] Profile loaded:", data)
+      console.log("[AUTH] Profile loaded:", data)
       setProfile(data)
     } catch (err) {
-      console.log("[v0] Profile fetch exception:", err)
+      console.log("[AUTH] Profile fetch exception:", err)
       setProfile(null)
     }
   }
@@ -51,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getSession()
 
         if (isMounted) {
-          console.log("[v0] Initial session check:", session?.user?.id ? "user found" : "no user")
+          console.log("[AUTH] Initial session check:", session?.user?.id ? "user found" : "no user")
           setUser(session?.user || null)
 
           if (session?.user) {
@@ -62,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsLoading(false)
         }
       } catch (err) {
-        console.log("[v0] Session check error:", err)
+        console.log("[AUTH] Session check error:", err)
         if (isMounted) {
           setIsLoading(false)
         }
@@ -74,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("[v0] Auth state changed:", event, session?.user?.id ? "user found" : "no user")
+      console.log("[AUTH] Auth state changed:", event, session?.user?.id ? "user found" : "no user")
 
       if (isMounted) {
         setUser(session?.user || null)

@@ -12,22 +12,77 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  const validateIdentifier = (value: string): string | null => {
+    if (!value.trim()) return "Email or username is required"
+
+    const isEmail = value.includes('@')
+    if (isEmail) {
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(value)) return "Please enter a valid email address"
+    } else {
+      // Username validation
+      if (value.length < 3) return "Username must be at least 3 characters"
+      if (value.length > 30) return "Username must be less than 30 characters"
+      if (!/^[a-zA-Z0-9_]+$/.test(value)) return "Username can only contain letters, numbers, and underscores"
+    }
+
+    return null
+  }
+
+  const getEmailFromUsername = async (username: string): Promise<string | null> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("username", username.toLowerCase())
+      .single()
+
+    if (error) {
+      console.error("[LOGIN] Username lookup error:", error)
+      return null
+    }
+    return data?.email || null
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const validationError = validateIdentifier(identifier)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      console.log("[LOGIN] Attempting login for:", email)
+      console.log("[LOGIN] Attempting login for:", identifier)
+
+      // Determine if input is email or username
+      const isEmail = identifier.includes('@')
+      let loginEmail = identifier
+
+      if (!isEmail) {
+        // Username provided - lookup email
+        const emailFromUsername = await getEmailFromUsername(identifier)
+        if (!emailFromUsername) {
+          throw new Error("Username not found. Please check your username or use your email address.")
+        }
+        loginEmail = emailFromUsername
+        console.log("[LOGIN] Found email for username:", loginEmail)
+      }
+
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: loginEmail,
         password,
       })
 
@@ -66,14 +121,14 @@ export default function LoginPage() {
               <form onSubmit={handleLogin}>
                 <div className="flex flex-col gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="identifier">Email or Username</Label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="m@example.com"
+                      id="identifier"
+                      type="text"
+                      placeholder="Enter email or username"
                       required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
                       className="border-orange-200 focus:border-orange-500"
                     />
                   </div>

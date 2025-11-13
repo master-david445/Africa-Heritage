@@ -15,11 +15,20 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
+          cookiesToSet.forEach(({ name, value, options = {} }) => {
+            // Ensure cookies work on mobile Safari and other browsers
+            const mobileOptions = {
+              ...options,
+              secure: true,
+              sameSite: 'lax' as const,
+              httpOnly: false, // Allow client-side access for auth
+            }
+            request.cookies.set(name, value)
+            supabaseResponse = NextResponse.next({
+              request,
+            })
+            supabaseResponse.cookies.set(name, value, mobileOptions)
           })
-          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
         },
       },
     },
