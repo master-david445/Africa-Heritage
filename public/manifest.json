@@ -1,0 +1,43 @@
+{
+  "name": "African Heritage - Proverbs Platform",
+  "short_name": "African Heritage",
+  "description": "Discover, share, and celebrate African proverbs and wisdom",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ea580c",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["education", "lifestyle", "social"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explore Proverbs",
+      "short_name": "Explore",
+      "description": "Browse African proverbs",
+      "url": "/explore",
+      "icons": [{ "src": "/logo.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Share Proverb",
+      "short_name": "Share",
+      "description": "Share a proverb",
+      "url": "/share",
+      "icons": [{ "src": "/logo.svg", "sizes": "96x96" }]
+    }
+  ]
+}

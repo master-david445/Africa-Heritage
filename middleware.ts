@@ -69,9 +69,8 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const method = request.method
   const clientIP = request.headers.get('x-forwarded-for') ||
-                   request.headers.get('x-real-ip') ||
-                   'unknown'
-  const userAgent = request.headers.get('user-agent') || ''
+                    request.headers.get('x-real-ip') ||
+                    'unknown'
 
   // Rate limiting for auth endpoints
   if (pathname.startsWith('/auth/') || pathname.includes('/actions/')) {
@@ -100,7 +99,7 @@ export async function middleware(request: NextRequest) {
 
     if (isSensitiveOperation) {
       const csrfToken = request.headers.get('x-csrf-token') ||
-                       request.nextUrl.searchParams.get('csrfToken')
+                        request.nextUrl.searchParams.get('csrfToken')
 
       if (!csrfToken || !validateCSRFToken(csrfToken)) {
         console.warn(`[MIDDLEWARE] CSRF token validation failed for ${pathname}`)
@@ -109,10 +108,14 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  let supabaseResponse = NextResponse.next({
-    request,
+  // Create response
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   })
 
+  // Create Supabase client for auth
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -126,21 +129,18 @@ export async function middleware(request: NextRequest) {
             // SECURITY FIX: Enable httpOnly for auth cookies to prevent XSS attacks
             const secureOptions = {
               ...options,
-              secure: true,
-              sameSite: 'strict' as const,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'lax' as const,
               httpOnly: true, // CRITICAL: Prevent client-side access to auth cookies
             }
-            request.cookies.set(name, value)
-            supabaseResponse = NextResponse.next({
-              request,
-            })
-            supabaseResponse.cookies.set(name, value, secureOptions)
+            response.cookies.set(name, value, secureOptions)
           })
         },
       },
     },
   )
 
+  // Get user for auth checks
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -185,13 +185,13 @@ export async function middleware(request: NextRequest) {
 
   // Add security headers
   const securityHeaders = {
-    // Content Security Policy
+    // Content Security Policy - tightened
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.supabase.co *.vercel-analytics.com",
-      "style-src 'self' 'unsafe-inline' *.googleapis.com",
+      "script-src 'self' *.supabase.co *.vercel-analytics.com",
+      "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
       "img-src 'self' data: https: *.supabase.co",
-      "font-src 'self' *.googleapis.com *.gstatic.com",
+      "font-src 'self' fonts.gstatic.com",
       "connect-src 'self' *.supabase.co *.vercel-analytics.com",
       "frame-src 'none'",
       "object-src 'none'",
@@ -211,8 +211,10 @@ export async function middleware(request: NextRequest) {
     // Referrer policy
     'Referrer-Policy': 'strict-origin-when-cross-origin',
 
-    // HSTS (HTTP Strict Transport Security)
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    // HSTS (HTTP Strict Transport Security) - only in production
+    ...(process.env.NODE_ENV === 'production' && {
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
+    }),
 
     // Permissions policy
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
@@ -223,7 +225,9 @@ export async function middleware(request: NextRequest) {
 
   // Apply security headers to response
   Object.entries(securityHeaders).forEach(([key, value]) => {
-    supabaseResponse.headers.set(key, value)
+    if (value) {
+      response.headers.set(key, value)
+    }
   })
 
   // Log security events
@@ -231,9 +235,18 @@ export async function middleware(request: NextRequest) {
     console.log(`[MIDDLEWARE] ${method} ${pathname} - User: ${user?.id || 'anonymous'} - IP: ${clientIP}`)
   }
 
-  return supabaseResponse
+  return response
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+  ],
 }
