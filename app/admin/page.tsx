@@ -12,7 +12,7 @@ import { AlertCircle, Users, Flag, CheckCircle } from "lucide-react"
 import { getPlatformStats, getReportedContent, type PlatformStats, type ReportedContent } from "@/app/actions/admin"
 
 export default function AdminDashboard() {
-  const { user, profile, isLoading } = useAuth()
+  const { user, profile, isLoading, refreshProfile } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<PlatformStats | null>(null)
   const [reports, setReports] = useState<ReportedContent[]>([])
@@ -20,11 +20,18 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // Debug logging
+    console.log("[ADMIN] Loading state:", isLoading)
+    console.log("[ADMIN] User:", user?.id)
+    console.log("[ADMIN] Profile:", profile)
+    console.log("[ADMIN] Is admin:", profile?.is_admin)
+
     // Wait for auth to load
     if (isLoading) return
 
     // Check admin status
     if (!user || !profile?.is_admin) {
+      console.log("[ADMIN] Access denied - redirecting to home")
       router.push("/")
       return
     }
@@ -50,8 +57,41 @@ export default function AdminDashboard() {
     fetchAdminData()
   }, [user, profile, isLoading, router])
 
+  // Debug: Show loading state or access denied
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg mb-4">Loading admin dashboard...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+        </div>
+      </div>
+    )
+  }
+
   if (!profile?.is_admin) {
-    return null
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 p-6 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">
+            You don't have admin privileges. Current status:
+          </p>
+          <div className="bg-white p-4 rounded-lg shadow text-left text-sm">
+            <p><strong>User ID:</strong> {user?.id || 'None'}</p>
+            <p><strong>Profile:</strong> {profile ? 'Loaded' : 'Not loaded'}</p>
+            <p><strong>Is Admin:</strong> {profile?.is_admin ? 'Yes' : 'No'}</p>
+            <p><strong>Username:</strong> {profile?.username || 'N/A'}</p>
+          </div>
+          <button
+            onClick={refreshProfile}
+            className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+          >
+            Refresh Profile
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const handleReportAction = (reportId: string, action: "approve" | "reject") => {

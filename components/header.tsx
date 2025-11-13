@@ -11,7 +11,7 @@ import NotificationBell from "@/components/notification-bell"
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { user, profile, isLoading } = useAuth()
+  const { user, profile, isLoading, refreshProfile } = useAuth()
   const router = useRouter()
 
   // Removed console.log for production
@@ -70,15 +70,22 @@ export default function Header() {
               {!isLoading && user && profile ? (
                 <div className="flex items-center gap-3">
                   <NotificationBell />
-                  <span className="hidden sm:inline text-sm">{profile.username}</span>
-                  <Link href={`/profile/${user.id}`}>
-                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                      <User className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                  <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleLogout}>
-                    <LogOut className="w-4 h-4" />
-                  </Button>
+                   <span className="hidden sm:inline text-sm">{profile.username}</span>
+                   <button
+                     onClick={refreshProfile}
+                     className="text-white hover:bg-white/20 px-2 py-1 rounded text-xs"
+                     title="Refresh Profile"
+                   >
+                     ↻
+                   </button>
+                   <Link href={`/profile/${user.id}`}>
+                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                       <User className="w-4 h-4" />
+                     </Button>
+                   </Link>
+                   <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleLogout}>
+                     <LogOut className="w-4 h-4" />
+                   </Button>
                 </div>
               ) : !isLoading ? (
                 /* Only show login/signup buttons when NOT loading and user is null */

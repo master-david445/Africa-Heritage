@@ -18,6 +18,7 @@ interface AuthContextType {
   user: SupabaseUser | null
   profile: Profile | null
   isLoading: boolean
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -54,6 +55,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.log("[AUTH] Profile fetch exception:", err)
       setProfile(null)
+    }
+  }
+
+  const refreshProfile = async () => {
+    if (user?.id) {
+      console.log("[AUTH] Manually refreshing profile...")
+      await fetchProfile(user.id)
     }
   }
 
@@ -111,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  return <AuthContext.Provider value={{ user, profile, isLoading }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, profile, isLoading, refreshProfile }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
