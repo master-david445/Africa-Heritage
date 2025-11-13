@@ -28,32 +28,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, retryCount = 0) => {
+    const maxRetries = isMobile() ? 3 : 1 // More retries on mobile
+    const retryDelay = isMobile() ? 1000 : 500 // Longer delay on mobile
+
     try {
+      console.log(`[AUTH] Fetching profile for ${userId} (attempt ${retryCount + 1})`)
       const supabase = createClient()
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+
+      // Add timeout for mobile devices
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), isMobile() ? 10000 : 5000) // 10s on mobile, 5s on desktop
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single()
+
+      clearTimeout(timeoutId)
 
       if (error) {
-        console.log("[AUTH] Profile fetch error:", error.message)
-        // On mobile, retry once after a short delay
-        if (isMobile()) {
-          console.log("[AUTH] Retrying profile fetch on mobile...")
-          await new Promise(resolve => setTimeout(resolve, 500))
-          const retry = await supabase.from("profiles").select("*").eq("id", userId).single()
-          if (!retry.error) {
-            console.log("[AUTH] Profile loaded on retry:", retry.data)
-            setProfile(retry.data)
-            return
-          }
+        console.log(`[AUTH] Profile fetch error (attempt ${retryCount + 1}):`, error.message)
+
+        // Retry logic for mobile devices or network errors
+        if ((isMobile() || error.message.includes('network')) && retryCount < maxRetries) {
+          console.log(`[AUTH] Retrying profile fetch in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`)
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+          return fetchProfile(userId, retryCount + 1)
         }
+
+        console.error("[AUTH] Profile fetch failed after all retries:", error)
         setProfile(null)
         return
       }
 
-      console.log("[AUTH] Profile loaded:", data)
+      console.log("[AUTH] Profile loaded successfully:", data?.username || 'unknown user')
       setProfile(data)
     } catch (err) {
-      console.log("[AUTH] Profile fetch exception:", err)
+      console.log(`[AUTH] Profile fetch exception (attempt ${retryCount + 1}):`, err)
+
+      // Retry on network errors for mobile
+      if (isMobile() && retryCount < maxRetries && (
+        err instanceof Error && (
+          err.name === 'AbortError' ||
+          err.message.includes('network') ||
+          err.message.includes('fetch')
+        )
+      )) {
+        console.log(`[AUTH] Retrying after network error in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`)
+        await new Promise(resolve => setTimeout(resolve, retryDelay))
+        return fetchProfile(userId, retryCount + 1)
+      }
+
+      console.error("[AUTH] Profile fetch failed permanently:", err)
       setProfile(null)
     }
   }

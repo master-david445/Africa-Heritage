@@ -67,7 +67,10 @@ export default function Header() {
 
             {/* Auth Buttons */}
             <div className="flex items-center gap-2">
-              {!isLoading && user && profile ? (
+              {isLoading ? (
+                // Loading state - show spinner
+                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : user && profile ? (
                 <div className="flex items-center gap-3">
                   <NotificationBell />
                    <span className="hidden sm:inline text-sm">{profile.username}</span>
@@ -86,25 +89,25 @@ export default function Header() {
                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleLogout}>
                      <LogOut className="w-4 h-4" />
                    </Button>
-                </div>
-              ) : !isLoading ? (
-                /* Only show login/signup buttons when NOT loading and user is null */
-                <div className="hidden sm:flex gap-2">
-                  <Link href="/auth/login">
-                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href="/auth/sign-up">
-                    <Button size="sm" className="bg-white text-orange-600 hover:bg-gray-100">
-                      Sign Up
-                    </Button>
-                  </Link>
-                </div>
-              ) : null}
+                 </div>
+               ) : (
+                 /* Show login/signup buttons when not loading and no user */
+                 <div className="hidden sm:flex gap-2">
+                   <Link href="/auth/login">
+                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                       Login
+                     </Button>
+                   </Link>
+                   <Link href="/auth/sign-up">
+                     <Button size="sm" className="bg-white text-orange-600 hover:bg-gray-100">
+                       Sign Up
+                     </Button>
+                   </Link>
+                 </div>
+               )}
 
-              {/* Mobile Menu Button */}
-              <button className="md:hidden text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              {/* Mobile Menu Button - Always visible on mobile */}
+              <button className="md:hidden text-white p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
@@ -112,36 +115,68 @@ export default function Header() {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden pb-4 border-t border-white/20">
+            <div className="mobile-menu md:hidden pb-4 border-t border-white/20 bg-gradient-to-br from-orange-600 to-red-600">
               <nav className="flex flex-col gap-3 pt-4">
-                <Link href="/" className="hover:opacity-80 transition">
+                <Link href="/" className="hover:opacity-80 transition" onClick={() => setMobileMenuOpen(false)}>
                   Home
                 </Link>
-                <Link href="/explore" className="hover:opacity-80 transition">
+                <Link href="/explore" className="hover:opacity-80 transition" onClick={() => setMobileMenuOpen(false)}>
                   Explore
                 </Link>
-                <Link href="/share" className="hover:opacity-80 transition">
+                <Link href="/share" className="hover:opacity-80 transition" onClick={() => setMobileMenuOpen(false)}>
                   Share Proverb
                 </Link>
-                <Link href="/search" className="hover:opacity-80 transition">
+                <Link href="/search" className="hover:opacity-80 transition" onClick={() => setMobileMenuOpen(false)}>
                   Search
                 </Link>
-                <Link href="/leaderboard" className="hover:opacity-80 transition">
+                <Link href="/leaderboard" className="hover:opacity-80 transition" onClick={() => setMobileMenuOpen(false)}>
                   Leaderboard
                 </Link>
-                {user && profile && (
-                  <Link href={`/profile/${user.id}`} className="hover:opacity-80 transition">
-                    My Profile
-                  </Link>
-                )}
-                {!isLoading && !user && (
-                  <div className="flex gap-2 pt-2">
-                    <Link href="/auth/login" className="flex-1">
+
+                {/* User-specific mobile menu items */}
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  </div>
+                ) : user && profile ? (
+                  <>
+                    <Link href={`/profile/${user.id}`} className="hover:opacity-80 transition" onClick={() => setMobileMenuOpen(false)}>
+                      My Profile
+                    </Link>
+                    {profile.is_admin && (
+                      <Link href="/admin" className="hover:opacity-80 transition font-semibold" onClick={() => setMobileMenuOpen(false)}>
+                        Admin
+                      </Link>
+                    )}
+                    <div className="flex gap-2 pt-2 border-t border-white/20 mt-2">
+                      <button
+                        onClick={() => {
+                          refreshProfile()
+                          setMobileMenuOpen(false)
+                        }}
+                        className="flex-1 px-3 py-2 text-white hover:bg-white/20 rounded text-sm"
+                      >
+                        Refresh Profile
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleLogout()
+                          setMobileMenuOpen(false)
+                        }}
+                        className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex gap-2 pt-2 border-t border-white/20 mt-2">
+                    <Link href="/auth/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 w-full">
                         Login
                       </Button>
                     </Link>
-                    <Link href="/auth/sign-up" className="flex-1">
+                    <Link href="/auth/sign-up" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                       <Button size="sm" className="bg-white text-orange-600 hover:bg-gray-100 w-full">
                         Sign Up
                       </Button>

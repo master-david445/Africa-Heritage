@@ -67,6 +67,18 @@ export const metadata: Metadata = {
     apple: "/logo.svg",
   },
   manifest: "/manifest.json",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
+  themeColor: '#ea580c', // terracotta-orange
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'African Heritage',
+  },
 }
 
 export default function RootLayout({

@@ -14,25 +14,45 @@ export default function ExplorePage() {
   const [proverbs, setProverbs] = useState<Proverb[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { profile: currentUser } = useAuth()
+  const [retryCount, setRetryCount] = useState(0)
+  const { profile: currentUser, isLoading: authLoading } = useAuth()
+
+  const fetchProverbs = async (attempt = 0) => {
+    try {
+      setLoading(true)
+      setError(null)
+      console.log(`[EXPLORE] Fetching proverbs (attempt ${attempt + 1})`)
+
+      const data = await getAllProverbs(20) // Initial load of 20 proverbs
+      setProverbs(data)
+      setRetryCount(0) // Reset retry count on success
+    } catch (err) {
+      console.error(`[EXPLORE] Error fetching proverbs (attempt ${attempt + 1}):`, err)
+
+      // Retry logic for mobile devices
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      const maxRetries = isMobile ? 3 : 1
+
+      if (attempt < maxRetries) {
+        console.log(`[EXPLORE] Retrying in 2 seconds... (${attempt + 1}/${maxRetries})`)
+        setRetryCount(attempt + 1)
+        setTimeout(() => fetchProverbs(attempt + 1), 2000)
+        return
+      }
+
+      setError("Failed to load proverbs. Please check your connection and try again.")
+      setRetryCount(0)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function fetchProverbs() {
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await getAllProverbs(20) // Initial load of 20 proverbs
-        setProverbs(data)
-      } catch (err) {
-        setError("Failed to load proverbs")
-        console.error("Error fetching proverbs:", err)
-      } finally {
-        setLoading(false)
-      }
+    // Wait for auth to load before fetching data
+    if (!authLoading) {
+      fetchProverbs()
     }
-
-    fetchProverbs()
-  }, [])
+  }, [authLoading])
 
   return (
     <>
@@ -86,14 +106,30 @@ export default function ExplorePage() {
                 ))}
               </div>
             ) : error ? (
-              <div className="bg-red-50 rounded-lg shadow-md p-12 text-center">
-                <p className="text-red-600 text-lg mb-4">{error}</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Try Again
-                </button>
+              <div className="bg-red-50 rounded-lg shadow-md p-6 sm:p-12 text-center">
+                <div className="text-red-600 mb-4">
+                  <p className="text-lg font-semibold mb-2">Unable to Load Proverbs</p>
+                  <p className="text-sm sm:text-base">{error}</p>
+                  {retryCount > 0 && (
+                    <p className="text-xs text-gray-600 mt-2">
+                      Retried {retryCount} time{retryCount > 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    onClick={() => fetchProverbs()}
+                    className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Reload Page
+                  </button>
+                </div>
               </div>
             ) : (
               <ProverbFeed initialProverbs={proverbs} currentUser={currentUser} />

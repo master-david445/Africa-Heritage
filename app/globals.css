@@ -144,6 +144,59 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Mobile-specific fixes */
+  @media (max-width: 768px) {
+    /* Ensure content is visible on mobile */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fix for mobile viewport issues */
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      position: relative;
+    }
+
+    /* Ensure buttons and interactive elements are properly sized for touch */
+    button, a, input, select, textarea {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Fix for mobile menu positioning */
+    .mobile-menu {
+      position: fixed;
+      top: 64px; /* header height */
+      left: 0;
+      right: 0;
+      z-index: 40;
+    }
+  }
+
+  /* Loading states for mobile */
+  @media (max-width: 768px) {
+    .mobile-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+    }
+
+    .mobile-loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ea580c;
+      animation: spin 1s ease-in-out infinite;
+    }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 }
 
 /* Typography scales */
