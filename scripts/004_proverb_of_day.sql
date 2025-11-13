@@ -8,28 +8,18 @@ CREATE TABLE IF NOT EXISTS public.proverb_of_the_day_tracker (
 -- Enable Row Level Security
 ALTER TABLE public.proverb_of_the_day_tracker ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies (allow read access for all authenticated users, write access for admin)
+-- RLS Policies (allow all operations for proverb of the day tracker since it's a global feature)
 CREATE POLICY "proverb_of_the_day_tracker_select_all"
   ON public.proverb_of_the_day_tracker FOR SELECT
   USING (TRUE);
 
-CREATE POLICY "proverb_of_the_day_tracker_insert_admin"
+CREATE POLICY "proverb_of_the_day_tracker_insert_all"
   ON public.proverb_of_the_day_tracker FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND is_admin = TRUE
-    )
-  );
+  WITH CHECK (TRUE);
 
-CREATE POLICY "proverb_of_the_day_tracker_update_admin"
+CREATE POLICY "proverb_of_the_day_tracker_update_all"
   ON public.proverb_of_the_day_tracker FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE id = auth.uid() AND is_admin = TRUE
-    )
-  );
+  USING (TRUE);
 
 -- Insert initial record
 INSERT INTO public.proverb_of_the_day_tracker (current_index, last_reset_date)
