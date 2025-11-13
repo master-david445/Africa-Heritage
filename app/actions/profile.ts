@@ -1,40 +1,73 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { ProfileService } from "@/lib/services/profile"
+import { AuthService } from "@/lib/services/auth"
+import { updateProfileSchema, updateEmailSchema, updatePasswordSchema, checkUsernameAvailabilitySchema } from "@/lib/validations/profile"
+import { revalidatePath } from "next/cache"
 
-export async function getCurrentUser() {
-  const supabase = await createClient()
+// Rate limiting store for profile actions (in production, use Redis)
+const profileActionLimits = new Map<string, { count: number; resetTime: number }>()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+/**
+ * Check rate limit for profile actions
+ */
+function checkProfileActionRateLimit(userId: string, maxActions: number = 10, windowMs: number = 60 * 1000): boolean {
+  const key = `profile_actions_${userId}`
+  const now = Date.now()
+  const record = profileActionLimits.get(key)
 
-  if (!user) {
-    return null
+  if (!record || now > record.resetTime) {
+    profileActionLimits.set(key, {
+      count: 1,
+      resetTime: now + windowMs
+    })
+    return true
   }
 
-  const { data: profile, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  if (record.count >= maxActions) {
+    return false
+  }
 
-  if (error) throw error
-  return profile
+  record.count++
+  return true
+}
+
+export async function getCurrentUser() {
+  try {
+    const result = await AuthService.getCurrentUser()
+    return result?.profile || null
+  } catch (error) {
+    console.error("[PROFILE_ACTIONS] Get current user error:", error)
+    throw new Error("Failed to get current user")
+  }
 }
 
 export async function getUserProfile(username: string) {
-  const supabase = await createClient()
+  try {
+    if (!username?.trim()) {
+      throw new Error("Username is required")
+    }
 
-  const { data, error } = await supabase.from("profiles").select("*").eq("username", username).single()
-
-  if (error) throw error
-  return data
+    const profile = await ProfileService.getUserProfile(username)
+    return profile
+  } catch (error) {
+    console.error("[PROFILE_ACTIONS] Get user profile error:", error)
+    throw error
+  }
 }
 
 export async function getUserProfileById(userId: string) {
-  const supabase = await createClient()
+  try {
+    if (!userId?.trim()) {
+      throw new Error("User ID is required")
+    }
 
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
-
-  if (error) throw error
-  return data
+    const profile = await ProfileService.getUserProfileById(userId)
+    return profile
+  } catch (error) {
+    console.error("[PROFILE_ACTIONS] Get user profile by ID error:", error)
+    throw error
+  }
 }
 
 export async function updateProfile(updates: {
@@ -43,92 +76,149 @@ export async function updateProfile(updates: {
   country?: string
   avatar_url?: string
 }) {
-  const supabase = await createClient()
+  try {
+    // Validate input
+    const validationResult = updateProfileSchema.safeParse(updates)
+    if (!validationResult.success) {
+      throw new Error(`Validation failed: ${validationResult.error.errors.map(e => e.message).join(', ')}`)
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    // Check rate limit
+    const currentUser = await AuthService.getCurrentUser()
+    if (!currentUser) {
+      throw new Error("Unauthorized: User not authenticated")
+    }
 
-  if (!user) {
-    throw new Error("Unauthorized")
+    if (!checkProfileActionRateLimit(currentUser.user.id, 5, 60 * 1000)) {
+      throw new Error("Too many profile updates. Please wait before trying again.")
+    }
+
+    console.log("[PROFILE_ACTIONS] Updating profile for user:", currentUser.user.id)
+
+    const result = await ProfileService.updateProfile(validationResult.data)
+
+    // Revalidate profile page
+    revalidatePath(`/profile/${result.username}`)
+    revalidatePath('/profile')
+
+    return result
+  } catch (error) {
+    console.error("[PROFILE_ACTIONS] Update profile error:", error)
+    throw error
   }
-
-  const { data, error } = await supabase.from("profiles").update(updates).eq("id", user.id).select().single()
-
-  if (error) throw error
-  return data
 }
 
 export async function getProfileStats(userId: string) {
-  const supabase = await createClient()
+  try {
+    if (!userId?.trim()) {
+      throw new Error("User ID is required")
+    }
 
-  // Get proverbs count
-  const { count: proverbsCount } = await supabase
-    .from("proverbs")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-
-  // Get followers count
-  const { count: followersCount } = await supabase
-    .from("follows")
-    .select("*", { count: "exact", head: true })
-    .eq("following_id", userId)
-
-  // Get following count
-  const { count: followingCount } = await supabase
-    .from("follows")
-    .select("*", { count: "exact", head: true })
-    .eq("follower_id", userId)
-
-  return {
-    proverbsCount: proverbsCount || 0,
-    followersCount: followersCount || 0,
-    followingCount: followingCount || 0,
+    const stats = await ProfileService.getProfileStats(userId)
+    return stats
+  } catch (error) {
+    console.error("[PROFILE_ACTIONS] Get profile stats error:", error)
+    throw error
   }
 }
 
-export async function updateEmail(newEmail: string) {
-  const supabase = await createClient()
+export async function updateEmail(input: {
+  email: string
+  currentPassword: string
+}) {
+  try {
+    // Validate input
+    const validationResult = updateEmailSchema.safeParse(input)
+    if (!validationResult.success) {
+      throw new Error(`Validation failed: ${validationResult.error.errors.map(e => e.message).join(', ')}`)
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    // Check rate limit
+    const currentUser = await AuthService.getCurrentUser()
+    if (!currentUser) {
+      throw new Error("Unauthorized: User not authenticated")
+    }
 
-  if (!user) {
-    throw new Error("Unauthorized")
+    if (!checkProfileActionRateLimit(currentUser.user.id, 2, 60 * 60 * 1000)) { // 2 per hour for email changes
+      throw new Error("Too many email change attempts. Please wait before trying again.")
+    }
+
+    console.log("[PROFILE_ACTIONS] Updating email for user:", currentUser.user.id)
+
+    const result = await ProfileService.updateEmail(validationResult.data)
+
+    // Log security event
+    console.log(`[SECURITY] Email change initiated for user ${currentUser.user.id} to ${input.email}`)
+
+    return result
+  } catch (error) {
+    console.error("[PROFILE_ACTIONS] Update email error:", error)
+    throw error
   }
-
-  const { error } = await supabase.auth.updateUser({ email: newEmail })
-  if (error) throw error
-
-  return { success: true }
 }
 
-export async function updatePassword(newPassword: string) {
-  const supabase = await createClient()
+export async function updatePassword(input: {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}) {
+  try {
+    // Validate input
+    const validationResult = updatePasswordSchema.safeParse(input)
+    if (!validationResult.success) {
+      throw new Error(`Validation failed: ${validationResult.error.errors.map(e => e.message).join(', ')}`)
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    // Check rate limit
+    const currentUser = await AuthService.getCurrentUser()
+    if (!currentUser) {
+      throw new Error("Unauthorized: User not authenticated")
+    }
 
-  if (!user) {
-    throw new Error("Unauthorized")
+    if (!checkProfileActionRateLimit(currentUser.user.id, 3, 60 * 60 * 1000)) { // 3 per hour for password changes
+      throw new Error("Too many password change attempts. Please wait before trying again.")
+    }
+
+    console.log("[PROFILE_ACTIONS] Updating password for user:", currentUser.user.id)
+
+    const result = await ProfileService.updatePassword(validationResult.data)
+
+    // Log security event
+    console.log(`[SECURITY] Password changed for user ${currentUser.user.id}`)
+
+    return result
+  } catch (error) {
+    console.error("[PROFILE_ACTIONS] Update password error:", error)
+    throw error
   }
-
-  const { error } = await supabase.auth.updateUser({ password: newPassword })
-  if (error) throw error
-
-  return { success: true }
 }
 
 export async function checkUsernameAvailability(username: string): Promise<boolean> {
-  const supabase = await createClient()
+  try {
+    // Validate input
+    const validationResult = checkUsernameAvailabilitySchema.safeParse({ username })
+    if (!validationResult.success) {
+      return false // Invalid format = not available
+    }
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("username", username)
-    .single()
+    const isAvailable = await ProfileService.checkUsernameAvailability(validationResult.data)
+    return isAvailable
+  } catch (error) {
+    console.error("[PROFILE_ACTIONS] Check username availability error:", error)
+    return false
+  }
+}
 
-  return !data // Available if no data found
+export async function getProfilePageData(userId: string) {
+  try {
+    if (!userId?.trim()) {
+      throw new Error("User ID is required")
+    }
+
+    const data = await ProfileService.getProfilePageData(userId)
+    return data
+  } catch (error) {
+    console.error("[PROFILE_ACTIONS] Get profile page data error:", error)
+    throw error
+  }
 }

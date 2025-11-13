@@ -1,13 +1,20 @@
 "use client"
 
 import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { updateProfile, updateEmail, updatePassword, checkUsernameAvailability } from "@/app/actions/profile"
+import { updateProfileSchema, updateEmailSchema, updatePasswordSchema } from "@/lib/validations/profile"
 import type { Profile } from "@/lib/types"
+import type { UpdateProfileInput, UpdateEmailInput, UpdatePasswordInput } from "@/lib/validations/profile"
+import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react"
 
 interface ProfileSettingsProps {
   profile: Profile
@@ -16,112 +23,123 @@ interface ProfileSettingsProps {
 
 export default function ProfileSettings({ profile, onProfileUpdate }: ProfileSettingsProps) {
   const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [success, setSuccess] = useState<string>("")
+  const [successMessage, setSuccessMessage] = useState<string>("")
+  const [errorMessage, setErrorMessage] = useState<string>("")
 
-  // Form states
-  const [username, setUsername] = useState(profile.username)
-  const [email, setEmail] = useState(profile.email || "")
-  const [currentPassword, setCurrentPassword] = useState("")
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [bio, setBio] = useState(profile.bio || "")
-  const [country, setCountry] = useState(profile.country || "")
+  // Confirmation dialogs state
+  const [showEmailConfirm, setShowEmailConfirm] = useState(false)
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
+  const [pendingEmailData, setPendingEmailData] = useState<UpdateEmailInput | null>(null)
+  const [pendingPasswordData, setPendingPasswordData] = useState<UpdatePasswordInput | null>(null)
+
+  // Profile form
+  const profileForm = useForm<UpdateProfileInput>({
+    resolver: zodResolver(updateProfileSchema),
+    defaultValues: {
+      username: profile.username,
+      bio: profile.bio || "",
+      country: profile.country || "",
+    },
+  })
+
+  // Email form
+  const emailForm = useForm<Omit<UpdateEmailInput, 'currentPassword'>>({
+    defaultValues: {
+      email: profile.email || "",
+    },
+  })
+
+  // Password form
+  const passwordForm = useForm<Omit<UpdatePasswordInput, 'currentPassword'>>({
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  })
 
   const clearMessages = () => {
-    setErrors({})
-    setSuccess("")
+    setSuccessMessage("")
+    setErrorMessage("")
   }
 
-  const handleProfileUpdate = async () => {
+  const handleProfileSubmit = async (data: UpdateProfileInput) => {
     clearMessages()
     setLoading(true)
 
     try {
-      // Validate username
-      if (username.length < 3) {
-        setErrors({ username: "Username must be at least 3 characters" })
-        return
-      }
-      if (username.length > 30) {
-        setErrors({ username: "Username must be less than 30 characters" })
-        return
-      }
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-        setErrors({ username: "Username can only contain letters, numbers, and underscores" })
-        return
-      }
-
       // Check username availability if changed
-      if (username !== profile.username) {
-        const isAvailable = await checkUsernameAvailability(username)
+      if (data.username !== profile.username) {
+        const isAvailable = await checkUsernameAvailability(data.username)
         if (!isAvailable) {
-          setErrors({ username: "Username is already taken" })
+          profileForm.setError("username", {
+            message: "Username is already taken"
+          })
           return
         }
       }
 
-      const result = await updateProfile({
-        username,
-        bio: bio || undefined,
-        country: country || undefined
-      })
-
+      const result = await updateProfile(data)
       onProfileUpdate(result)
-      setSuccess("Profile updated successfully!")
+      setSuccessMessage("Profile updated successfully!")
+
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccessMessage(""), 5000)
     } catch (error) {
-      setErrors({ general: error instanceof Error ? error.message : "Update failed" })
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update profile")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleEmailUpdate = async () => {
+  const handleEmailSubmit = (data: Omit<UpdateEmailInput, 'currentPassword'>) => {
+    setPendingEmailData({ ...data, currentPassword: "" })
+    setShowEmailConfirm(true)
+  }
+
+  const confirmEmailUpdate = async () => {
+    if (!pendingEmailData) return
+
     clearMessages()
     setLoading(true)
+    setShowEmailConfirm(false)
 
     try {
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(email)) {
-        setErrors({ email: "Please enter a valid email address" })
-        return
-      }
+      await updateEmail(pendingEmailData)
+      setSuccessMessage("Email update initiated. Please check your email for confirmation.")
+      emailForm.reset()
+      setPendingEmailData(null)
 
-      await updateEmail(email)
-      setSuccess("Email update initiated. Please check your email for confirmation.")
+      // Clear success message after 10 seconds
+      setTimeout(() => setSuccessMessage(""), 10000)
     } catch (error) {
-      setErrors({ email: error instanceof Error ? error.message : "Email update failed" })
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update email")
     } finally {
       setLoading(false)
     }
   }
 
-  const handlePasswordUpdate = async () => {
+  const handlePasswordSubmit = (data: Omit<UpdatePasswordInput, 'currentPassword'>) => {
+    setPendingPasswordData({ ...data, currentPassword: "" })
+    setShowPasswordConfirm(true)
+  }
+
+  const confirmPasswordUpdate = async () => {
+    if (!pendingPasswordData) return
+
     clearMessages()
     setLoading(true)
+    setShowPasswordConfirm(false)
 
     try {
-      if (!currentPassword) {
-        setErrors({ password: "Current password is required" })
-        return
-      }
-      if (newPassword.length < 6) {
-        setErrors({ password: "New password must be at least 6 characters" })
-        return
-      }
-      if (newPassword !== confirmPassword) {
-        setErrors({ password: "Passwords do not match" })
-        return
-      }
+      await updatePassword(pendingPasswordData)
+      setSuccessMessage("Password updated successfully!")
+      passwordForm.reset()
+      setPendingPasswordData(null)
 
-      await updatePassword(newPassword)
-      setSuccess("Password updated successfully!")
-      setCurrentPassword("")
-      setNewPassword("")
-      setConfirmPassword("")
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccessMessage(""), 5000)
     } catch (error) {
-      setErrors({ password: error instanceof Error ? error.message : "Password update failed" })
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update password")
     } finally {
       setLoading(false)
     }
@@ -129,59 +147,91 @@ export default function ProfileSettings({ profile, onProfileUpdate }: ProfileSet
 
   return (
     <div className="space-y-6">
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-          {success}
-        </div>
+      {/* Success Message */}
+      {successMessage && (
+        <Alert className="border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            {successMessage}
+          </AlertDescription>
+        </Alert>
       )}
 
-      {errors.general && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {errors.general}
-        </div>
+      {/* Error Message */}
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {errorMessage}
+          </AlertDescription>
+        </Alert>
       )}
 
-      {/* Profile Information */}
+      {/* Profile Information Form */}
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <CardDescription>Update your public profile details</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className={errors.username ? "border-red-500" : ""}
-              />
-              {errors.username && <p className="text-sm text-red-500 mt-1">{errors.username}</p>}
+        <CardContent>
+          <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  {...profileForm.register("username")}
+                  className={profileForm.formState.errors.username ? "border-red-500" : ""}
+                />
+                {profileForm.formState.errors.username && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {profileForm.formState.errors.username.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  {...profileForm.register("country")}
+                  placeholder="Your country"
+                />
+                {profileForm.formState.errors.country && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {profileForm.formState.errors.country.message}
+                  </p>
+                )}
+              </div>
             </div>
             <div>
-              <Label htmlFor="country">Country</Label>
-              <Input
-                id="country"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                placeholder="Your country"
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                {...profileForm.register("bio")}
+                placeholder="Tell us about yourself..."
+                rows={3}
               />
+              {profileForm.formState.errors.bio && (
+                <p className="text-sm text-red-500 mt-1">
+                  {profileForm.formState.errors.bio.message}
+                </p>
+              )}
             </div>
-          </div>
-          <div>
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell us about yourself..."
-              rows={3}
-            />
-          </div>
-          <Button onClick={handleProfileUpdate} disabled={loading} className="w-full md:w-auto">
-            {loading ? "Updating..." : "Update Profile"}
-          </Button>
+            <Button
+              type="submit"
+              disabled={loading || !profileForm.formState.isDirty}
+              className="w-full md:w-auto"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Profile"
+              )}
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
@@ -192,66 +242,161 @@ export default function ProfileSettings({ profile, onProfileUpdate }: ProfileSet
           <CardDescription>Manage your account security</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Email Update Section */}
+          {/* Email Update Form */}
           <div className="space-y-2">
             <Label htmlFor="email">Email Address</Label>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <form onSubmit={emailForm.handleSubmit(handleEmailSubmit)} className="flex flex-col sm:flex-row gap-2">
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...emailForm.register("email")}
                 placeholder="your.email@example.com"
-                className={`flex-1 ${errors.email ? "border-red-500" : ""}`}
+                className={`flex-1 ${emailForm.formState.errors.email ? "border-red-500" : ""}`}
               />
-              <Button variant="outline" onClick={handleEmailUpdate} disabled={loading}>
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={loading || !emailForm.formState.isDirty}
+              >
                 Update Email
               </Button>
-            </div>
-            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+            </form>
+            {emailForm.formState.errors.email && (
+              <p className="text-sm text-red-500">
+                {emailForm.formState.errors.email.message}
+              </p>
+            )}
           </div>
 
-          {/* Password Update Section */}
+          {/* Password Update Form */}
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="current-password">Current Password</Label>
-              <Input
-                id="current-password"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className={errors.password ? "border-red-500" : ""}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className={errors.password ? "border-red-500" : ""}
-                />
+            <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    {...passwordForm.register("newPassword")}
+                    className={passwordForm.formState.errors.newPassword ? "border-red-500" : ""}
+                  />
+                  {passwordForm.formState.errors.newPassword && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {passwordForm.formState.errors.newPassword.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="confirm-password">Confirm New Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    {...passwordForm.register("confirmPassword")}
+                    className={passwordForm.formState.errors.confirmPassword ? "border-red-500" : ""}
+                  />
+                  {passwordForm.formState.errors.confirmPassword && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {passwordForm.formState.errors.confirmPassword.message}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div>
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={errors.password ? "border-red-500" : ""}
-                />
-              </div>
-            </div>
-            {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
-            <Button variant="outline" onClick={handlePasswordUpdate} disabled={loading} className="w-full md:w-auto">
-              Update Password
-            </Button>
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={loading || !passwordForm.formState.isDirty}
+                className="w-full md:w-auto"
+              >
+                Update Password
+              </Button>
+            </form>
           </div>
         </CardContent>
       </Card>
+
+      {/* Email Confirmation Dialog */}
+      <Dialog open={showEmailConfirm} onOpenChange={setShowEmailConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Email Change</DialogTitle>
+            <DialogDescription>
+              Changing your email address will require verification. Please enter your current password to confirm this action.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="confirm-email-password">Current Password</Label>
+              <Input
+                id="confirm-email-password"
+                type="password"
+                value={pendingEmailData?.currentPassword || ""}
+                onChange={(e) => setPendingEmailData(prev => prev ? { ...prev, currentPassword: e.target.value } : null)}
+                placeholder="Enter your current password"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEmailConfirm(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmEmailUpdate}
+              disabled={!pendingEmailData?.currentPassword || loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Confirm Change"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Confirmation Dialog */}
+      <Dialog open={showPasswordConfirm} onOpenChange={setShowPasswordConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Password Change</DialogTitle>
+            <DialogDescription>
+              Please enter your current password to confirm this security-sensitive action.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="confirm-password-current">Current Password</Label>
+              <Input
+                id="confirm-password-current"
+                type="password"
+                value={pendingPasswordData?.currentPassword || ""}
+                onChange={(e) => setPendingPasswordData(prev => prev ? { ...prev, currentPassword: e.target.value } : null)}
+                placeholder="Enter your current password"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasswordConfirm(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmPasswordUpdate}
+              disabled={!pendingPasswordData?.currentPassword || loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Confirm Change"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

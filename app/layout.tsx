@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/lib/auth-context"
+import { QueryProvider } from "@/lib/query-client"
 import ErrorBoundary from "@/components/error-boundary"
 import { Toaster } from "sonner"
 import "./globals.css"
@@ -27,11 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        <ErrorBoundary>
-          <AuthProvider>
-            {children}
-            <Toaster position="top-right" richColors />
-          </AuthProvider>
+        <ErrorBoundary level="app" name="RootLayout" enableSentry={true}>
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+              <Toaster position="top-right" richColors />
+            </AuthProvider>
+          </QueryProvider>
         </ErrorBoundary>
         <Analytics />
       </body>

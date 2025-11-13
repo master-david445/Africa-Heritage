@@ -8,11 +8,13 @@ import ProverbCard from "@/components/proverb-card"
 import BadgeShowcase from "@/components/badge-showcase"
 import PointsTracker from "@/components/points-tracker"
 import ProfileSettings from "@/components/profile-settings"
+import ErrorBoundary from "@/components/error-boundary"
 import { useAuth } from "@/lib/auth-context"
 import { getUserProfileById, getProfileStats } from "@/app/actions/profile"
 import { getProverbsByUser } from "@/app/actions/proverbs"
 import { getUserFollowers, getUserFollowing } from "@/app/actions/follows"
 import type { Profile, Proverb } from "@/lib/types"
+import type { FollowListItem } from "@/lib/types/profile"
 
 export default function ProfilePage({ params }: { params: { userId: string } }) {
   const { user: currentUser } = useAuth()
@@ -265,7 +267,9 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
             )}
 
             {activeTab === "settings" && isOwnProfile && (
-              <ProfileSettings profile={profileUser} onProfileUpdate={handleProfileUpdate} />
+              <ErrorBoundary level="component" name="ProfileSettings">
+                <ProfileSettings profile={profileUser} onProfileUpdate={handleProfileUpdate} />
+              </ErrorBoundary>
             )}
           </div>
             </div>

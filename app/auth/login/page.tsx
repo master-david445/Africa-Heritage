@@ -21,11 +21,15 @@ export default function LoginPage() {
   const validateIdentifier = (value: string): string | null => {
     if (!value.trim()) return "Email or username is required"
 
-    const isEmail = value.includes('@')
+    // Use proper email regex validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const isEmail = emailRegex.test(value)
+
     if (isEmail) {
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(value)) return "Please enter a valid email address"
+      // Additional email validation for common issues
+      if (value.includes('..') || value.startsWith('.') || value.endsWith('.')) {
+        return "Please enter a valid email address"
+      }
     } else {
       // Username validation
       if (value.length < 3) return "Username must be at least 3 characters"
@@ -34,21 +38,6 @@ export default function LoginPage() {
     }
 
     return null
-  }
-
-  const getEmailFromUsername = async (username: string): Promise<string | null> => {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("username", username.toLowerCase())
-      .single()
-
-    if (error) {
-      console.error("[LOGIN] Username lookup error:", error)
-      return null
-    }
-    return data?.email || null
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -60,39 +49,23 @@ export default function LoginPage() {
       return
     }
 
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
       console.log("[LOGIN] Attempting login for:", identifier)
 
-      // Determine if input is email or username
-      const isEmail = identifier.includes('@')
-      let loginEmail = identifier
+      // Import AuthService dynamically to avoid SSR issues
+      const { AuthService } = await import("@/lib/services/auth")
 
-      if (!isEmail) {
-        // Username provided - lookup email
-        const emailFromUsername = await getEmailFromUsername(identifier)
-        if (!emailFromUsername) {
-          throw new Error("Username not found. Please check your username or use your email address.")
-        }
-        loginEmail = emailFromUsername
-        console.log("[LOGIN] Found email for username:", loginEmail)
-      }
-
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+      // Use enhanced sign-in with proper identifier parsing
+      const result = await AuthService.signIn({
+        identifier,
         password,
       })
 
-      if (authError) {
-        console.error("[LOGIN] Auth error:", authError)
-        throw authError
-      }
-
-      console.log("[LOGIN] Login successful, user:", data.user?.id)
-      console.log("[LOGIN] Session:", data.session ? "exists" : "null")
+      console.log("[LOGIN] Login successful, user:", result.user?.id)
+      console.log("[LOGIN] Session:", result.session ? "exists" : "null")
 
       // Wait a moment for auth state to propagate
       await new Promise(resolve => setTimeout(resolve, 100))
@@ -102,7 +75,22 @@ export default function LoginPage() {
       router.refresh()
     } catch (error: unknown) {
       console.error("[LOGIN] Login failed:", error)
-      setError(error instanceof Error ? error.message : "An error occurred during login")
+
+      // Provide more specific error messages
+      let errorMessage = "An error occurred during login"
+      if (error instanceof Error) {
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Invalid email/username or password. Please check your credentials and try again."
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Please check your email and click the confirmation link before logging in."
+        } else if (error.message.includes("Too many requests")) {
+          errorMessage = "Too many login attempts. Please wait a few minutes before trying again."
+        } else {
+          errorMessage = error.message
+        }
+      }
+
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
