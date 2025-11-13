@@ -12,22 +12,26 @@ import { AlertCircle, Users, Flag, CheckCircle } from "lucide-react"
 import { getPlatformStats, getReportedContent, type PlatformStats, type ReportedContent } from "@/app/actions/admin"
 
 export default function AdminDashboard() {
-  const { profile: user } = useAuth()
+  const { user, profile, isLoading } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<PlatformStats | null>(null)
   const [reports, setReports] = useState<ReportedContent[]>([])
-  const [loading, setLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user?.is_admin) {
+    // Wait for auth to load
+    if (isLoading) return
+
+    // Check admin status
+    if (!user || !profile?.is_admin) {
       router.push("/")
       return
     }
 
     async function fetchAdminData() {
       try {
-        setLoading(true)
+        setDataLoading(true)
         setError(null)
         const [statsData, reportsData] = await Promise.all([
           getPlatformStats(),
@@ -39,14 +43,14 @@ export default function AdminDashboard() {
         setError("Failed to load admin data")
         console.error("Error fetching admin data:", err)
       } finally {
-        setLoading(false)
+        setDataLoading(false)
       }
     }
 
     fetchAdminData()
-  }, [user, router])
+  }, [user, profile, isLoading, router])
 
-  if (!user?.is_admin) {
+  if (!profile?.is_admin) {
     return null
   }
 
@@ -83,7 +87,7 @@ export default function AdminDashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          {loading ? (
+          {dataLoading ? (
             // Loading skeletons for stats cards
             Array.from({ length: 6 }).map((_, i) => (
               <Card key={i}>

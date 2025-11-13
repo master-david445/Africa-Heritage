@@ -4,8 +4,8 @@
 -- Create answers table
 CREATE TABLE IF NOT EXISTS public.answers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  question_id UUID NOT NULL REFERENCES public.questions(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  question_id UUID NOT NULL REFERENCES public.proverbs(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
   vote_count INTEGER DEFAULT 0,
   is_accepted BOOLEAN DEFAULT FALSE,
@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS public.answers (
 CREATE TABLE IF NOT EXISTS public.votes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   answer_id UUID NOT NULL REFERENCES public.answers(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  vote_type VARCHAR(4) NOT NULL CHECK (vote_type IN ('up', 'down')),
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  vote_type TEXT NOT NULL CHECK (vote_type IN ('upvote', 'downvote')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(answer_id, user_id)
 );
@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS public.votes (
 -- Create question_follows table
 CREATE TABLE IF NOT EXISTS public.question_follows (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  question_id UUID NOT NULL REFERENCES public.questions(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  question_id UUID NOT NULL REFERENCES public.proverbs(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(question_id, user_id)
 );
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.question_follows (
 -- Create notifications table
 CREATE TABLE IF NOT EXISTS public.notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   type VARCHAR(50) NOT NULL,
   title VARCHAR(255) NOT NULL,
   message TEXT NOT NULL,
@@ -168,21 +168,14 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Increment vote count on answers
-DROP FUNCTION IF EXISTS public.increment_vote_count(UUID, VARCHAR);
-CREATE OR REPLACE FUNCTION public.increment_vote_count(answer_id UUID, vote_type VARCHAR)
+DROP FUNCTION IF EXISTS public.increment_vote_count(UUID, INT);
+CREATE OR REPLACE FUNCTION public.increment_vote_count(answer_id UUID, vote_change INT)
 RETURNS VOID AS $$
 BEGIN
   IF answer_id IS NULL THEN
     RAISE EXCEPTION 'answer_id cannot be null';
   END IF;
-  IF vote_type NOT IN ('up', 'down') THEN
-    RAISE EXCEPTION 'vote_type must be up or down';
-  END IF;
-  IF vote_type = 'up' THEN
-    UPDATE public.answers SET vote_count = vote_count + 1 WHERE id = answer_id;
-  ELSE
-    UPDATE public.answers SET vote_count = vote_count - 1 WHERE id = answer_id;
-  END IF;
+  UPDATE public.answers SET vote_count = vote_count + vote_change WHERE id = answer_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
@@ -197,7 +190,7 @@ BEGIN
   IF points IS NULL OR points < 0 THEN
     RAISE EXCEPTION 'points must be a positive integer';
   END IF;
-  UPDATE public.profiles SET reputation_score = reputation_score + points WHERE user_id = user_id;
+  UPDATE public.profiles SET points = points + points WHERE id = user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
