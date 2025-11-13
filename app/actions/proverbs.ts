@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { createProverbSchema, CreateProverbInput } from "@/lib/validations"
+import type { Proverb } from "@/lib/types"
 
 export async function createProverb(formData: CreateProverbInput) {
   const supabase = await createClient()
@@ -196,18 +197,15 @@ export async function deleteProverb(proverbId: string) {
   if (error) throw error
 }
 
-export async function getProverbOfTheDay() {
+export async function getProverbOfTheDay(): Promise<Proverb> {
   const supabase = await createClient()
 
-  // Get total count of proverbs
+  // Get total proverb count
   const { count: totalProverbs, error: countError } = await supabase
     .from("proverbs")
     .select("*", { count: "exact", head: true })
 
-  if (countError) throw countError
-  if (!totalProverbs || totalProverbs === 0) {
-    throw new Error("No proverbs available")
-  }
+  if (countError || !totalProverbs) throw new Error("Failed to get proverb count")
 
   // Get or create tracker record
   let { data: tracker, error: trackerError } = await supabase
@@ -215,91 +213,60 @@ export async function getProverbOfTheDay() {
     .select("*")
     .single()
 
-  if (trackerError && trackerError.code === "PGRST116") {
-    // No record exists, create one
+  if (trackerError || !tracker) {
+    // Create initial tracker if doesn't exist
     const { data: newTracker, error: insertError } = await supabase
       .from("proverb_of_the_day_tracker")
-      .insert({
-        current_index: 0,
-        last_reset_date: new Date().toISOString().split('T')[0]
-      })
+      .insert({ current_index: 0, last_reset_date: new Date().toISOString().split('T')[0] })
       .select()
       .single()
 
-    if (insertError) throw insertError
+    if (insertError) throw new Error("Failed to create tracker")
     tracker = newTracker
-  } else if (trackerError) {
-    throw trackerError
   }
 
+  // Check if date has changed
   const today = new Date().toISOString().split('T')[0]
-  const lastResetDate = tracker.last_reset_date
+  const lastResetDate = new Date(tracker.last_reset_date).toISOString().split('T')[0]
 
-  // Check if we need to update for a new day
+  let currentIndex = tracker.current_index
+
   if (today !== lastResetDate) {
-    // Calculate days since Unix epoch
-    const epoch = new Date('1970-01-01')
-    const todayDate = new Date(today)
-    const daysSinceEpoch = Math.floor((todayDate.getTime() - epoch.getTime()) / (1000 * 60 * 60 * 24))
-
-    // Use days since epoch modulo total proverbs as the index
-    const newIndex = daysSinceEpoch % totalProverbs
+    // New day - increment index
+    currentIndex = (tracker.current_index + 1) % totalProverbs
 
     // Update tracker
-    const { data: updatedTracker, error: updateError } = await supabase
+    await supabase
       .from("proverb_of_the_day_tracker")
       .update({
-        current_index: newIndex,
+        current_index: currentIndex,
         last_reset_date: today
       })
       .eq("id", tracker.id)
-      .select()
-      .single()
-
-    if (updateError) throw updateError
-    tracker = updatedTracker
   }
 
-  // Get the proverb at the current index
+  // Fetch the proverb at current index
   const { data: proverb, error: proverbError } = await supabase
     .from("proverbs")
     .select(`
       *,
-      profiles:user_id(id, username, avatar_url)
+      profiles:user_id(id, username, avatar_url, country)
     `)
-    .order("created_at", { ascending: false })
-    .range(tracker.current_index, tracker.current_index)
+    .order("created_at", { ascending: true })
+    .range(currentIndex, currentIndex)
+    .single()
 
-  if (proverbError) throw proverbError
-  if (!proverb || proverb.length === 0) {
-    throw new Error("Proverb not found")
-  }
+  if (proverbError || !proverb) throw new Error("Failed to fetch proverb")
 
-  // Get counts for this proverb
-  const proverbData = proverb[0]
-  const [likesResult, commentsResult, bookmarksResult] = await Promise.all([
-    supabase
-      .from("likes")
-      .select("proverb_id")
-      .eq("proverb_id", proverbData.id),
-    supabase
-      .from("comments")
-      .select("proverb_id")
-      .eq("proverb_id", proverbData.id),
-    supabase
-      .from("bookmarks")
-      .select("proverb_id")
-      .eq("proverb_id", proverbData.id),
+  // Get counts
+  const [likesResult, commentsResult] = await Promise.all([
+    supabase.from("likes").select("proverb_id").eq("proverb_id", proverb.id),
+    supabase.from("comments").select("proverb_id").eq("proverb_id", proverb.id),
   ])
 
-  const likesCount = likesResult.data?.length || 0
-  const commentsCount = commentsResult.data?.length || 0
-  const bookmarksCount = bookmarksResult.data?.length || 0
-
   return {
-    ...proverbData,
-    likes_count: likesCount,
-    comments_count: commentsCount,
-    bookmarks_count: bookmarksCount,
+    ...proverb,
+    likes_count: likesResult.data?.length || 0,
+    comments_count: commentsResult.data?.length || 0,
   }
 }
