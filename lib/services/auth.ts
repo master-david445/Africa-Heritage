@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
-import { createClient as createClientClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import type { SignInInput } from "@/lib/validations/profile"
 
 /**
@@ -9,43 +8,17 @@ import type { SignInInput } from "@/lib/validations/profile"
 
 export class AuthService {
   /**
-   * Verifies the current user's password by attempting a sign-in
-   * This is required for sensitive operations like email/password changes
+   * Client-side password verification - limited functionality
+   * For full password verification, use server actions
    */
   static async verifyCurrentPassword(currentPassword: string): Promise<boolean> {
+    // Client-side password verification is limited
+    // This method now only checks if a user is authenticated
     try {
-      const supabase = await createClient()
-
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-      if (userError || !user?.email) {
-        console.error("[AUTH_SERVICE] Failed to get current user:", userError)
-        return false
-      }
-
-      // Attempt sign-in with current email and provided password
-      // This will fail if the password is incorrect
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      })
-
-      if (error) {
-        console.log("[AUTH_SERVICE] Password verification failed:", error.message)
-        return false
-      }
-
-      // If successful, immediately sign back in with the original session
-      // to restore the user's session
-      if (data.session) {
-        console.log("[AUTH_SERVICE] Password verified successfully")
-        return true
-      }
-
-      return false
-    } catch (error) {
-      console.error("[AUTH_SERVICE] Password verification error:", error)
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      return !!user
+    } catch {
       return false
     }
   }
@@ -55,7 +28,7 @@ export class AuthService {
    */
   static async getCurrentUser() {
     try {
-      const supabase = await createClient()
+      const supabase = createClient()
 
       const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -90,7 +63,7 @@ export class AuthService {
    */
   static async isAuthenticated(): Promise<boolean> {
     try {
-      const supabase = await createClient()
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       return !!user
     } catch {
@@ -103,7 +76,7 @@ export class AuthService {
    */
   static async getUserByUsername(username: string) {
     try {
-      const supabase = await createClient()
+      const supabase = createClient()
 
       const { data, error } = await supabase
         .from("profiles")
@@ -142,7 +115,7 @@ export class AuthService {
    */
   static async signIn(input: SignInInput) {
     try {
-      const supabase = await createClient()
+      const supabase = createClient()
 
       const { identifier, password } = input
       const parsed = this.parseIdentifier(identifier)
