@@ -86,3 +86,49 @@ export async function getProfileStats(userId: string) {
     followingCount: followingCount || 0,
   }
 }
+
+export async function updateEmail(newEmail: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error("Unauthorized")
+  }
+
+  const { error } = await supabase.auth.updateUser({ email: newEmail })
+  if (error) throw error
+
+  return { success: true }
+}
+
+export async function updatePassword(newPassword: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error("Unauthorized")
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw error
+
+  return { success: true }
+}
+
+export async function checkUsernameAvailability(username: string): Promise<boolean> {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .single()
+
+  return !data // Available if no data found
+}

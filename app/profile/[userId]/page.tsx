@@ -7,6 +7,7 @@ import FollowersList from "@/components/followers-list"
 import ProverbCard from "@/components/proverb-card"
 import BadgeShowcase from "@/components/badge-showcase"
 import PointsTracker from "@/components/points-tracker"
+import ProfileSettings from "@/components/profile-settings"
 import { useAuth } from "@/lib/auth-context"
 import { getUserProfileById, getProfileStats } from "@/app/actions/profile"
 import { getProverbsByUser } from "@/app/actions/proverbs"
@@ -23,7 +24,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
   const [following, setFollowing] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<"proverbs" | "followers" | "following" | "achievements">("proverbs")
+  const [activeTab, setActiveTab] = useState<"proverbs" | "followers" | "following" | "achievements" | "settings">("proverbs")
 
   useEffect(() => {
     async function loadProfileData() {
@@ -116,6 +117,10 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
 
   const isOwnProfile = currentUser?.id === userId
 
+  const handleProfileUpdate = (updates: Partial<Profile>) => {
+    setProfileUser(prev => prev ? { ...prev, ...updates } : null)
+  }
+
   // Convert Profile to User format expected by components
   const userForComponents = {
     id: profileUser.id,
@@ -138,25 +143,28 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
   return (
     <>
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
           {/* Profile Card */}
-          <div className="lg:col-span-1">
-            <UserProfileCard user={profileUser} isOwnProfile={isOwnProfile} />
-            {isOwnProfile && (
-              <div className="mt-6">
-                <PointsTracker currentPoints={profileUser.points} nextMilestone={1500} />
-              </div>
-            )}
+          <div className="xl:col-span-1">
+            <div className="max-w-sm mx-auto xl:max-w-none">
+              <UserProfileCard user={profileUser} isOwnProfile={isOwnProfile} />
+              {isOwnProfile && (
+                <div className="mt-6">
+                  <PointsTracker currentPoints={profileUser.points} nextMilestone={1500} />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-2">
+          <div className="xl:col-span-2">
+            <div className="max-w-4xl mx-auto">
             {/* Tabs */}
-            <div className="flex gap-4 mb-6 border-b border-gray-200 overflow-x-auto">
+            <div className="flex gap-2 md:gap-4 mb-6 border-b border-gray-200 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
               <button
                 onClick={() => setActiveTab("proverbs")}
-                className={`px-4 py-2 font-semibold transition whitespace-nowrap ${
+                className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
                   activeTab === "proverbs"
                     ? "text-orange-600 border-b-2 border-orange-600"
                     : "text-gray-600 hover:text-gray-900"
@@ -166,7 +174,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
               </button>
               <button
                 onClick={() => setActiveTab("followers")}
-                className={`px-4 py-2 font-semibold transition whitespace-nowrap ${
+                className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
                   activeTab === "followers"
                     ? "text-orange-600 border-b-2 border-orange-600"
                     : "text-gray-600 hover:text-gray-900"
@@ -176,7 +184,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
               </button>
               <button
                 onClick={() => setActiveTab("following")}
-                className={`px-4 py-2 font-semibold transition whitespace-nowrap ${
+                className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
                   activeTab === "following"
                     ? "text-orange-600 border-b-2 border-orange-600"
                     : "text-gray-600 hover:text-gray-900"
@@ -186,7 +194,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
               </button>
               <button
                 onClick={() => setActiveTab("achievements")}
-                className={`px-4 py-2 font-semibold transition whitespace-nowrap ${
+                className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
                   activeTab === "achievements"
                     ? "text-orange-600 border-b-2 border-orange-600"
                     : "text-gray-600 hover:text-gray-900"
@@ -194,6 +202,18 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
               >
                 Achievements
               </button>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setActiveTab("settings")}
+                  className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
+                    activeTab === "settings"
+                      ? "text-orange-600 border-b-2 border-orange-600"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Settings
+                </button>
+              )}
             </div>
 
             {/* Tab Content */}
@@ -243,7 +263,12 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
             {activeTab === "achievements" && (
               <BadgeShowcase badges={userForComponents.badges} userPoints={profileUser.points} />
             )}
+
+            {activeTab === "settings" && isOwnProfile && (
+              <ProfileSettings profile={profileUser} onProfileUpdate={handleProfileUpdate} />
+            )}
           </div>
+            </div>
         </div>
       </main>
     </>

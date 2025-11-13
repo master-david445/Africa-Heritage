@@ -83,20 +83,20 @@ export default function UserProfileCard({ user, userId, isOwnProfile = false, on
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       {/* Cover Image */}
-      <div className="h-32 bg-gradient-to-r from-orange-400 to-red-400"></div>
+      <div className="h-24 sm:h-32 bg-gradient-to-r from-orange-400 to-red-400"></div>
 
       {/* Profile Content */}
-      <div className="px-6 pb-6">
+      <div className="px-4 sm:px-6 pb-6">
         {/* Avatar */}
-        <div className="flex items-end gap-4 -mt-16 mb-4">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-red-400 border-4 border-white flex items-center justify-center text-white font-bold text-2xl">
+        <div className="flex items-end gap-3 sm:gap-4 -mt-12 sm:-mt-16 mb-4">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-orange-400 to-red-400 border-4 border-white flex items-center justify-center text-white font-bold text-xl sm:text-2xl">
             {displayUser.username.substring(0, 2).toUpperCase()}
           </div>
         </div>
 
         {/* User Info */}
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">{displayUser.username}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{displayUser.username}</h1>
           {displayUser.is_verified && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded ml-2">Verified</span>}
           {displayUser.is_admin && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded ml-2">Admin</span>}
         </div>
@@ -119,7 +119,7 @@ export default function UserProfileCard({ user, userId, isOwnProfile = false, on
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 py-4 border-t border-b border-gray-200 mb-4">
+        <div className="grid grid-cols-3 gap-2 md:gap-4 py-4 border-t border-b border-gray-200 mb-4">
           <div className="text-center">
             <div className="text-lg font-bold text-gray-900">{displayUser.proverbsCount}</div>
             <div className="text-xs text-gray-500">Proverbs</div>
