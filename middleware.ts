@@ -72,6 +72,26 @@ export async function middleware(request: NextRequest) {
                     request.headers.get('x-real-ip') ||
                     'unknown'
 
+  // Skip heavy middleware for API routes and static assets
+  if (pathname.startsWith('/api/') ||
+      pathname.startsWith('/_next/') ||
+      pathname.includes('favicon') ||
+      pathname.includes('.svg') ||
+      pathname.includes('.png') ||
+      pathname.includes('.jpg')) {
+    // Apply only essential security headers for static/API routes
+    const response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    })
+
+    // Minimal security headers for performance
+    response.headers.set('X-Content-Type-Options', 'nosniff')
+    response.headers.set('X-Frame-Options', 'DENY')
+    return response
+  }
+
   // Rate limiting for auth endpoints
   if (pathname.startsWith('/auth/') || pathname.includes('/actions/')) {
     const rateLimitKey = `${clientIP}_${pathname}`

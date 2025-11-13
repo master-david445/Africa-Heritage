@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Header from "@/components/header"
 import ProverbOfTheDay from "@/components/proverb-of-the-day"
 import SearchBar from "@/components/search-bar"
@@ -15,7 +16,9 @@ export default function ExplorePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
-  const { profile: currentUser, isLoading: authLoading } = useAuth()
+  // Removed authChecked state - simplified logic
+  const { user, profile: currentUser, isLoading: authLoading } = useAuth()
+  const router = useRouter()
 
   const fetchProverbs = async (attempt = 0) => {
     try {
@@ -47,12 +50,49 @@ export default function ExplorePage() {
     }
   }
 
+  // Handle authentication and redirects
   useEffect(() => {
-    // Wait for auth to load before fetching data
-    if (!authLoading) {
-      fetchProverbs()
+    // If auth is still loading, wait
+    if (authLoading) return
+
+    // If no user after auth check completes, redirect to login
+    if (!user) {
+      console.log("[EXPLORE] No authenticated user, redirecting to login")
+      router.push("/auth/login")
+      return
     }
-  }, [authLoading])
+
+    // If user is authenticated, fetch proverbs
+    fetchProverbs()
+  }, [authLoading, user, router])
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Explore African Wisdom</h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Checking authentication...
+              </p>
+              <div className="mt-8 flex justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </>
+    )
+  }
+
+  // If not authenticated, this component won't render due to redirect in useEffect
+  // But add a fallback just in case
+  if (!user) {
+    return null
+  }
 
   return (
     <>

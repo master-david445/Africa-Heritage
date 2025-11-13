@@ -96,12 +96,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = createClient()
     let isMounted = true
+    let timeoutId: NodeJS.Timeout
 
     const initializeAuth = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+        console.log("[AUTH] Starting auth initialization...")
+
+        // Set loading to false after a short delay to prevent infinite loading
+        timeoutId = setTimeout(() => {
+          console.warn("[AUTH] Auth check timeout - assuming no user")
+          if (isMounted) {
+            setUser(null)
+            setProfile(null)
+            setIsLoading(false)
+          }
+        }, 5000) // 5 second timeout
+
+        const { data: { session }, error } = await supabase.auth.getSession()
+
+        // Clear the timeout since we got a response
+        clearTimeout(timeoutId)
+
+        if (error) {
+          console.error("[AUTH] Auth error:", error)
+          if (isMounted) {
+            setUser(null)
+            setProfile(null)
+            setIsLoading(false)
+          }
+          return
+        }
 
         if (isMounted) {
           console.log("[AUTH] Initial session check:", session?.user?.id ? "user found" : "no user")
@@ -115,14 +139,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsLoading(false)
         }
       } catch (err) {
-        console.log("[AUTH] Session check error:", err)
+        console.error("[AUTH] Auth initialization failed:", err)
+        clearTimeout(timeoutId)
         if (isMounted) {
+          setUser(null)
+          setProfile(null)
           setIsLoading(false)
         }
       }
     }
 
     initializeAuth()
+
+    return () => {
+      isMounted = false
+      clearTimeout(timeoutId)
+    }
 
     const {
       data: { subscription },

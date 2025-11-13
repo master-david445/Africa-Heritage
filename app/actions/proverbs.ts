@@ -86,6 +86,7 @@ export async function getProverbsByUser(userId: string) {
 export async function getAllProverbs(limit = 20, offset = 0) {
   const supabase = await createClient()
 
+  // Optimized query: fetch proverbs first, then batch count queries
   const { data, error } = await supabase
     .from("proverbs")
     .select(`
@@ -97,10 +98,14 @@ export async function getAllProverbs(limit = 20, offset = 0) {
 
   if (error) throw error
 
-  // Get counts separately for better performance
-  const proverbIds = data?.map(p => p.id) || []
+  if (!data || data.length === 0) {
+    return []
+  }
 
-  if (proverbIds.length > 0) {
+  // Batch count queries for better performance (single query per table instead of per proverb)
+  const proverbIds = data.map(p => p.id)
+
+  try {
     const [likesResult, commentsResult, bookmarksResult] = await Promise.all([
       supabase
         .from("likes")
@@ -116,11 +121,12 @@ export async function getAllProverbs(limit = 20, offset = 0) {
         .in("proverb_id", proverbIds),
     ])
 
-    // Create count maps
+    // Create efficient count maps
     const likesCount = new Map<string, number>()
     const commentsCount = new Map<string, number>()
     const bookmarksCount = new Map<string, number>()
 
+    // Single pass counting for each result set
     likesResult.data?.forEach(like => {
       likesCount.set(like.proverb_id, (likesCount.get(like.proverb_id) || 0) + 1)
     })
@@ -134,20 +140,22 @@ export async function getAllProverbs(limit = 20, offset = 0) {
     })
 
     // Add counts to proverbs
-    return data?.map(proverb => ({
+    return data.map(proverb => ({
       ...proverb,
       likes_count: likesCount.get(proverb.id) || 0,
       comments_count: commentsCount.get(proverb.id) || 0,
       bookmarks_count: bookmarksCount.get(proverb.id) || 0,
-    })) || []
+    }))
+  } catch (countError) {
+    console.warn('Count queries failed, returning proverbs without counts:', countError)
+    // Return proverbs without counts if count queries fail
+    return data.map(proverb => ({
+      ...proverb,
+      likes_count: 0,
+      comments_count: 0,
+      bookmarks_count: 0,
+    }))
   }
-
-  return data?.map(proverb => ({
-    ...proverb,
-    likes_count: 0,
-    comments_count: 0,
-    bookmarks_count: 0,
-  })) || []
 }
 
 export async function updateProverb(
@@ -200,20 +208,19 @@ export async function deleteProverb(proverbId: string) {
 export async function getProverbOfTheDay(): Promise<Proverb> {
   const supabase = await createClient()
 
-  // Get total proverb count
-  const { count: totalProverbs, error: countError } = await supabase
-    .from("proverbs")
-    .select("*", { count: "exact", head: true })
+  // Optimized: Get count and proverb in parallel, handle tracker separately
+  const [countResult, trackerResult] = await Promise.all([
+    supabase.from("proverbs").select("*", { count: "exact", head: true }),
+    supabase.from("proverb_of_the_day_tracker").select("*").single()
+  ])
 
-  if (countError || !totalProverbs) throw new Error("Failed to get proverb count")
+  const totalProverbs = countResult.count
+  if (!totalProverbs) throw new Error("No proverbs available")
 
-  // Get or create tracker record
-  let { data: tracker, error: trackerError } = await supabase
-    .from("proverb_of_the_day_tracker")
-    .select("*")
-    .single()
+  let tracker = trackerResult.data
+  let needsUpdate = false
 
-  if (trackerError || !tracker) {
+  if (trackerResult.error || !tracker) {
     // Create initial tracker if doesn't exist
     const { data: newTracker, error: insertError } = await supabase
       .from("proverb_of_the_day_tracker")
@@ -234,18 +241,28 @@ export async function getProverbOfTheDay(): Promise<Proverb> {
   if (today !== lastResetDate) {
     // New day - increment index
     currentIndex = (tracker.current_index + 1) % totalProverbs
+    needsUpdate = true
+  }
 
-    // Update tracker
-    await supabase
+  // Update tracker asynchronously if needed (don't block proverb fetch)
+  if (needsUpdate) {
+    supabase
       .from("proverb_of_the_day_tracker")
       .update({
         current_index: currentIndex,
         last_reset_date: today
       })
       .eq("id", tracker.id)
+      .then(({ error }) => {
+        if (error) {
+          console.warn('Failed to update tracker:', error)
+        } else {
+          console.log('Proverb of the day tracker updated')
+        }
+      })
   }
 
-  // Fetch the proverb at current index
+  // Fetch proverb with optimized single query including counts
   const { data: proverb, error: proverbError } = await supabase
     .from("proverbs")
     .select(`
@@ -258,15 +275,15 @@ export async function getProverbOfTheDay(): Promise<Proverb> {
 
   if (proverbError || !proverb) throw new Error("Failed to fetch proverb")
 
-  // Get counts
+  // Get counts efficiently
   const [likesResult, commentsResult] = await Promise.all([
-    supabase.from("likes").select("proverb_id").eq("proverb_id", proverb.id),
-    supabase.from("comments").select("proverb_id").eq("proverb_id", proverb.id),
+    supabase.from("likes").select("proverb_id", { count: "exact" }).eq("proverb_id", proverb.id),
+    supabase.from("comments").select("proverb_id", { count: "exact" }).eq("proverb_id", proverb.id),
   ])
 
   return {
     ...proverb,
-    likes_count: likesResult.data?.length || 0,
-    comments_count: commentsResult.data?.length || 0,
+    likes_count: likesResult.count || 0,
+    comments_count: commentsResult.count || 0,
   }
 }
