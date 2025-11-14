@@ -72,6 +72,8 @@ export async function proxy(request: NextRequest) {
                     request.headers.get('x-real-ip') ||
                     'unknown'
 
+  console.log('[PROXY] Request:', method, pathname)
+
   // Skip heavy middleware for API routes and static assets
   if (pathname.startsWith('/api/') ||
       pathname.startsWith('/_next/') ||
@@ -165,6 +167,8 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  console.log('[PROXY] User state:', user ? `authenticated (${user.id})` : 'unauthenticated')
+
   // Define public routes that don't require authentication
   const publicRoutes = [
     "/",
@@ -195,9 +199,17 @@ export async function proxy(request: NextRequest) {
     request.nextUrl.pathname === route
   )
 
+  console.log('[PROXY] Route analysis:', {
+    pathname,
+    isProtectedRoute,
+    isPublicRoute,
+    user: !!user
+  })
+
   // Redirect unauthenticated users to login if accessing protected routes
   // that are not explicitly marked as public
   if (!user && isProtectedRoute && !isPublicRoute) {
+    console.log('[PROXY] Redirecting to login:', pathname)
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)

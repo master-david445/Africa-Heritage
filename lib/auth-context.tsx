@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import type { Database } from "@/lib/database.types"
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchProfile = async (userId: string, retryCount = 0) => {
+  const fetchProfile = useCallback(async (userId: string, retryCount = 0) => {
     const maxRetries = isMobile() ? 3 : 1 // More retries on mobile
     const retryDelay = isMobile() ? 1000 : 500 // Longer delay on mobile
 
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("[AUTH] Profile fetch failed permanently:", err)
       setProfile(null)
     }
-  }
+  }, [])
 
   const refreshProfile = async () => {
     if (user?.id) {
@@ -177,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isMounted = false
       subscription?.unsubscribe()
     }
-  }, [])
+  }, [fetchProfile])
 
   return <AuthContext.Provider value={{ user, profile, isLoading, refreshProfile }}>{children}</AuthContext.Provider>
 }
