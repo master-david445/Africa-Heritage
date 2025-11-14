@@ -65,7 +65,7 @@ function validateCSRFToken(token: string): boolean {
   return true
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const method = request.method
   const clientIP = request.headers.get('x-forwarded-for') ||
@@ -96,7 +96,7 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/auth/') || pathname.includes('/actions/')) {
     const rateLimitKey = `${clientIP}_${pathname}`
     if (!checkRateLimit(rateLimitKey, 10, 5 * 60 * 1000)) { // 10 requests per 5 minutes
-      console.warn(`[MIDDLEWARE] Rate limit exceeded for ${clientIP} on ${pathname}`)
+      console.warn(`[PROXY] Rate limit exceeded for ${clientIP} on ${pathname}`)
       return new NextResponse('Too Many Requests', {
         status: 429,
         headers: {
@@ -122,7 +122,7 @@ export async function middleware(request: NextRequest) {
                         request.nextUrl.searchParams.get('csrfToken')
 
       if (!csrfToken || !validateCSRFToken(csrfToken)) {
-        console.warn(`[MIDDLEWARE] CSRF token validation failed for ${pathname}`)
+        console.warn(`[PROXY] CSRF token validation failed for ${pathname}`)
         return new NextResponse('Forbidden', { status: 403 })
       }
     }
@@ -252,22 +252,8 @@ export async function middleware(request: NextRequest) {
 
   // Log security events
   if (pathname.includes('/actions/') || pathname.startsWith('/auth/')) {
-    console.log(`[MIDDLEWARE] ${method} ${pathname} - User: ${user?.id || 'anonymous'} - IP: ${clientIP}`)
+    console.log(`[PROXY] ${method} ${pathname} - User: ${user?.id || 'anonymous'} - IP: ${clientIP}`)
   }
 
   return response
-}
-
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
-  ],
-  runtime: 'experimental-edge',
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Search, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,18 @@ import { useAuth } from "@/lib/auth-context"
 import { getCurrentUser } from "@/app/actions/profile"
 import { searchProverbs, getSearchSuggestions } from "@/app/actions/search"
 import type { Proverb, Profile, SearchFilters } from "@/lib/types"
+
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => func(...args), wait)
+  }
+}
 
 export default function SearchPage() {
   const router = useRouter()
@@ -139,11 +151,19 @@ export default function SearchPage() {
     }
   }
 
+  // Debounced fetch suggestions
+  const debouncedFetchSuggestions = useCallback(
+    debounce((searchQuery: string) => {
+      fetchSuggestions(searchQuery)
+    }, 300),
+    []
+  )
+
   // Handle input change with debouncing
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setQuery(value)
-    fetchSuggestions(value)
+    debouncedFetchSuggestions(value)
   }
 
   // Get all suggestions as flat array for keyboard navigation

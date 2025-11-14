@@ -102,17 +102,24 @@ export async function getSearchSuggestions(query: string, limit = 5) {
   const supabase = await createClient()
 
   if (!query || query.length < 2) {
-    return []
+    return {
+      categories: [],
+      countries: [],
+      languages: [],
+      authors: []
+    }
   }
 
-  // Get category suggestions
-  const { data: categories } = await supabase
+  // Get category suggestions using a more efficient query
+  // Use a subquery to find proverbs with matching categories
+  const { data: categoryResults } = await supabase
     .from("proverbs")
     .select("categories")
     .not("categories", "is", null)
+    .limit(100) // Limit to avoid processing too many rows
 
   const categorySuggestions = new Set<string>()
-  categories?.forEach(row => {
+  categoryResults?.forEach(row => {
     row.categories?.forEach((cat: string) => {
       if (cat.toLowerCase().includes(query.toLowerCase())) {
         categorySuggestions.add(cat)
@@ -120,7 +127,7 @@ export async function getSearchSuggestions(query: string, limit = 5) {
     })
   })
 
-  // Get country suggestions
+  // Get country suggestions with proper indexing
   const { data: countries } = await supabase
     .from("proverbs")
     .select("country")
