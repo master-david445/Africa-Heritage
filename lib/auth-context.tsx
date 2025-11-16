@@ -151,11 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth()
 
-    return () => {
-      isMounted = false
-      clearTimeout(timeoutId)
-    }
-
+    // Set up auth state change listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -175,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
+      clearTimeout(timeoutId)
       subscription?.unsubscribe()
     }
   }, [fetchProfile])

@@ -64,7 +64,8 @@ export default function ExplorePage() {
 
     // If user is authenticated, fetch proverbs
     fetchProverbs()
-  }, [authLoading, user, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user])
 
   // Show loading state while checking authentication
   if (authLoading) {

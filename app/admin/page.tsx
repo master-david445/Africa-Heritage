@@ -55,7 +55,8 @@ export default function AdminDashboard() {
     }
 
     fetchAdminData()
-  }, [user, profile, isLoading, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, profile, isLoading])
 
   // Debug: Show loading state or access denied
   if (isLoading) {
