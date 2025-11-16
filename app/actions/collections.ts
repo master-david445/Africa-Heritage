@@ -283,7 +283,7 @@ export async function removeProverbFromCollection(collectionId: string, proverbI
   }
 }
 
-export async function getCollectionProverbs(collectionId: string): Promise<any[]> {
+export async function getCollectionProverbs(collectionId: string): Promise<Proverb[]> {
   try {
     const supabase = await createClient()
 
@@ -319,8 +319,8 @@ export async function getCollectionProverbs(collectionId: string): Promise<any[]
 
     return data?.map(item => ({
       ...item.proverbs,
-      userName: item.proverbs.profiles?.[0]?.username || "Anonymous",
-      userAvatar: item.proverbs.profiles?.[0]?.avatar_url || "/placeholder-user.jpg",
+      userName: (item.proverbs as any).profiles?.username || "Anonymous",
+      userAvatar: (item.proverbs as any).profiles?.avatar_url || "/placeholder-user.jpg",
     })) || []
   } catch (error) {
     console.error("[v0] Error in getCollectionProverbs:", error)
