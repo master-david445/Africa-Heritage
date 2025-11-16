@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Header from "@/components/header"
 import ProverbOfTheDay from "@/components/proverb-of-the-day"
@@ -16,11 +16,11 @@ export default function ExplorePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
-  // Removed authChecked state - simplified logic
   const { user, profile: currentUser, isLoading: authLoading } = useAuth()
   const router = useRouter()
+  const hasFetchedRef = useRef(false)
 
-  const fetchProverbs = async (attempt = 0) => {
+  const fetchProverbs = useCallback(async (attempt = 0) => {
     try {
       setLoading(true)
       setError(null)
@@ -48,7 +48,7 @@ export default function ExplorePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   // Handle authentication and redirects
   useEffect(() => {
@@ -62,10 +62,12 @@ export default function ExplorePage() {
       return
     }
 
-    // If user is authenticated, fetch proverbs
-    fetchProverbs()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, user])
+    // If user is authenticated, fetch proverbs only once
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true
+      fetchProverbs()
+    }
+  }, [authLoading, user, router, fetchProverbs])
 
   // Show loading state while checking authentication
   if (authLoading) {
