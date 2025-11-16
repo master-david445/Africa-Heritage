@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
-import type { Collection, CollectionItem } from "@/lib/types"
+import type { Collection, CollectionItem, Proverb } from "@/lib/types"
 
 export async function getUserCollections(userId: string): Promise<Collection[]> {
   try {
@@ -317,11 +317,14 @@ export async function getCollectionProverbs(collectionId: string): Promise<any[]
       throw new Error("Failed to fetch collection proverbs")
     }
 
-    return data?.map(item => ({
-      ...item.proverbs,
-      userName: item.proverbs.profiles?.[0]?.username || "Anonymous",
-      userAvatar: item.proverbs.profiles?.[0]?.avatar_url || "/placeholder-user.jpg",
-    })) || []
+    return data?.map(item => {
+      const proverb = Array.isArray(item.proverbs) ? item.proverbs[0] : item.proverbs
+      return {
+        ...proverb,
+        userName: proverb.profiles?.[0]?.username || "Anonymous",
+        userAvatar: proverb.profiles?.[0]?.avatar_url || "/placeholder-user.jpg",
+      }
+    }) || []
   } catch (error) {
     console.error("[v0] Error in getCollectionProverbs:", error)
     throw error

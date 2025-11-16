@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Lock, Users, Share2, Edit, Trash2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import ProverbCard from "@/components/proverb-card"
+import CollectionProverbCard from "@/components/collection-proverb-card"
 import EditCollectionModal from "@/components/edit-collection-modal"
 import { toast } from "sonner"
 import type { Collection, Proverb } from "@/lib/types"
@@ -140,7 +140,7 @@ export default function CollectionDetail({
         ) : (
           <div className="space-y-4">
             {proverbs.map((proverb) => (
-              <ProverbCard key={proverb.id} proverb={proverb} currentUser={currentUser} />
+              <CollectionProverbCard key={proverb.id} proverb={proverb} />
             ))}
           </div>
         )}
