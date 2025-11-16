@@ -12,6 +12,8 @@ import { useAuth } from "@/lib/auth-context"
 import type { Proverb } from "@/lib/types"
 
 export default function ExplorePage() {
+  console.log("[EXPLORE] Component rendering/re-rendering")
+  
   const [proverbs, setProverbs] = useState<Proverb[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -19,6 +21,15 @@ export default function ExplorePage() {
   const { user, profile: currentUser, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const hasFetchedRef = useRef(false)
+  
+  console.log("[EXPLORE] State:", { 
+    proverbsCount: proverbs.length, 
+    loading, 
+    error, 
+    authLoading, 
+    hasUser: !!user,
+    hasFetched: hasFetchedRef.current 
+  })
 
   const fetchProverbs = useCallback(async (attempt = 0) => {
     try {
@@ -52,8 +63,13 @@ export default function ExplorePage() {
 
   // Handle authentication and redirects
   useEffect(() => {
+    console.log("[EXPLORE] useEffect triggered", { authLoading, user: !!user, hasFetched: hasFetchedRef.current })
+    
     // If auth is still loading, wait
-    if (authLoading) return
+    if (authLoading) {
+      console.log("[EXPLORE] Auth still loading, waiting...")
+      return
+    }
 
     // If no user after auth check completes, redirect to login
     if (!user) {
@@ -64,8 +80,11 @@ export default function ExplorePage() {
 
     // If user is authenticated, fetch proverbs only once
     if (!hasFetchedRef.current) {
+      console.log("[EXPLORE] Fetching proverbs for the first time")
       hasFetchedRef.current = true
       fetchProverbs()
+    } else {
+      console.log("[EXPLORE] Already fetched, skipping")
     }
   }, [authLoading, user, router, fetchProverbs])
 
