@@ -7,7 +7,15 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
       },
     ],
   },
@@ -28,18 +36,25 @@ const nextConfig = {
           },
           {
             key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
           },
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.supabase.co *.vercel-analytics.com *.vercel-insights.com va.vercel-scripts.com",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https: blob:",
+              "script-src 'self' *.supabase.co *.vercel-analytics.com *.vercel-insights.com va.vercel-scripts.com",
+              "style-src 'self'",
+              "img-src 'self' data: https://images.unsplash.com https://*.supabase.co https://avatars.githubusercontent.com blob:",
               "font-src 'self' data:",
               "connect-src 'self' *.supabase.co *.vercel-analytics.com *.vercel-insights.com wss://*.supabase.co",
               "frame-src 'self' *.supabase.co",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
             ].join('; '),
           },
         ],
