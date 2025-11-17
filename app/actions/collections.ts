@@ -2,7 +2,14 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import type { Database } from "@/lib/database.types"
 import type { Collection, CollectionItem, Proverb } from "@/lib/types"
+
+type ProverbWithUser = Database["public"]["Tables"]["proverbs"]["Row"] & {
+  profiles: Database["public"]["Tables"]["profiles"]["Row"] | null
+  userName: string
+  userAvatar: string
+}
 
 export async function getUserCollections(userId: string): Promise<Collection[]> {
   try {
@@ -283,7 +290,7 @@ export async function removeProverbFromCollection(collectionId: string, proverbI
   }
 }
 
-export async function getCollectionProverbs(collectionId: string): Promise<Proverb[]> {
+export async function getCollectionProverbs(collectionId: string): Promise<ProverbWithUser[]> {
   try {
     const supabase = await createClient()
 
@@ -317,11 +324,15 @@ export async function getCollectionProverbs(collectionId: string): Promise<Prove
       throw new Error("Failed to fetch collection proverbs")
     }
 
-    return data?.map(item => ({
-      ...item.proverbs,
-      userName: (item.proverbs as any).profiles?.username || "Anonymous",
-      userAvatar: (item.proverbs as any).profiles?.avatar_url || "/placeholder-user.jpg",
-    })) || []
+    return data?.map((item) => {
+      const proverb = item.proverbs as any;
+      return {
+        ...proverb,
+        profiles: proverb.profiles,
+        userName: proverb.profiles?.username || "Anonymous",
+        userAvatar: proverb.profiles?.avatar_url || "/placeholder-user.jpg",
+      };
+    }) || []
   } catch (error) {
     console.error("[v0] Error in getCollectionProverbs:", error)
     throw error
