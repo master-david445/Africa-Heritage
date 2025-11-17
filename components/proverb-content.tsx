@@ -9,7 +9,7 @@ export default function ProverbContent({ proverb }: ProverbContentProps) {
     <article>
       {/* Proverb Text */}
       <blockquote className="font-serif text-lg text-gray-800 mb-2 italic">
-        "{proverb.proverb}"
+        {proverb.proverb}
       </blockquote>
 
       {/* Meaning */}
