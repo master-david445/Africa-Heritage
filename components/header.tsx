@@ -11,8 +11,20 @@ import NotificationBell from "@/components/notification-bell"
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [headerError, setHeaderError] = useState<string | null>(null)
   const { user, profile, isLoading, refreshProfile } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoading) {
+      setHeaderError(null)
+      return
+    }
+    const timeout = setTimeout(() => {
+      setHeaderError('Authentication is taking longer than expected')
+    }, 10000)
+    return () => clearTimeout(timeout)
+  }, [isLoading])
 
   // Removed console.log for production
 
@@ -68,8 +80,14 @@ export default function Header() {
             {/* Auth Buttons */}
             <div className="flex items-center gap-2">
               {isLoading ? (
-                // Loading state - show spinner
-                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                // Loading state - show spinner or error
+                headerError ? (
+                  <div className="text-xs text-red-300 max-w-32 text-right">
+                    {headerError}
+                  </div>
+                ) : (
+                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                )
               ) : user && profile ? (
                 <div className="flex items-center gap-3">
                   <NotificationBell />

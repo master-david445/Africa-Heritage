@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [reports, setReports] = useState<ReportedContent[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasFetchedRef = useRef(false)
 
   useEffect(() => {
     // Debug logging
@@ -36,25 +37,30 @@ export default function AdminDashboard() {
       return
     }
 
-    async function fetchAdminData() {
-      try {
-        setDataLoading(true)
-        setError(null)
-        const [statsData, reportsData] = await Promise.all([
-          getPlatformStats(),
-          getReportedContent()
-        ])
-        setStats(statsData)
-        setReports(reportsData)
-      } catch (err) {
-        setError("Failed to load admin data")
-        console.error("Error fetching admin data:", err)
-      } finally {
-        setDataLoading(false)
+    // Fetch admin data only once
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true
+      
+      async function fetchAdminData() {
+        try {
+          setDataLoading(true)
+          setError(null)
+          const [statsData, reportsData] = await Promise.all([
+            getPlatformStats(),
+            getReportedContent()
+          ])
+          setStats(statsData)
+          setReports(reportsData)
+        } catch (err) {
+          setError("Failed to load admin data")
+          console.error("Error fetching admin data:", err)
+        } finally {
+          setDataLoading(false)
+        }
       }
-    }
 
-    fetchAdminData()
+      fetchAdminData()
+    }
   }, [user, profile, isLoading, router])
 
   // Debug: Show loading state or access denied

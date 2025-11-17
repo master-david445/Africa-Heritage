@@ -1,6 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
+
+// Prevent duplicate proverbs fetches
+const proverbsFetchCache = new Map<string, Promise<any>>();
+
+function getCachedProverbsFetch(key: string, fetcher: () => Promise<any>) {
+  if (proverbsFetchCache.has(key)) {
+    return proverbsFetchCache.get(key)!;
+  }
+
+  const promise = fetcher().finally(() => {
+    proverbsFetchCache.delete(key);
+  });
+
+  proverbsFetchCache.set(key, promise);
+  return promise;
+}
 import { useRouter } from "next/navigation"
 import Header from "@/components/header"
 import ProverbOfTheDay from "@/components/proverb-of-the-day"
@@ -16,55 +32,30 @@ export default function ExplorePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
-  // Removed authChecked state - simplified logic
   const { user, profile: currentUser, isLoading: authLoading } = useAuth()
   const router = useRouter()
+  const hasFetchedRef = useRef(false)
 
-  const fetchProverbs = async (attempt = 0) => {
-    try {
-      setLoading(true)
-      setError(null)
-      console.log(`[EXPLORE] Fetching proverbs (attempt ${attempt + 1})`)
+  const fetchProverbs = useCallback(async () => {
+    if (loading) return
 
-      const data = await getAllProverbs(20) // Initial load of 20 proverbs
-      setProverbs(data)
-      setRetryCount(0) // Reset retry count on success
-    } catch (err) {
-      console.error(`[EXPLORE] Error fetching proverbs (attempt ${attempt + 1}):`, err)
+    setLoading(true)
+    setError(null)
 
-      // Retry logic for mobile devices
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      const maxRetries = isMobile ? 3 : 1
-
-      if (attempt < maxRetries) {
-        console.log(`[EXPLORE] Retrying in 2 seconds... (${attempt + 1}/${maxRetries})`)
-        setRetryCount(attempt + 1)
-        setTimeout(() => fetchProverbs(attempt + 1), 2000)
-        return
+    await getCachedProverbsFetch('proverbs', async () => {
+      try {
+        const data = await getAllProverbs(20) // Initial load of 20 proverbs
+        setProverbs(data)
+        setRetryCount(0)
+      } catch (err) {
+        setError("Failed to load proverbs. Please check your connection and try again.")
+        setRetryCount(0)
       }
+    })
 
-      setError("Failed to load proverbs. Please check your connection and try again.")
-      setRetryCount(0)
-    } finally {
-      setLoading(false)
-    }
-  }
+    setLoading(false)
+  }, [])
 
-  // Handle authentication and redirects
-  useEffect(() => {
-    // If auth is still loading, wait
-    if (authLoading) return
-
-    // If no user after auth check completes, redirect to login
-    if (!user) {
-      console.log("[EXPLORE] No authenticated user, redirecting to login")
-      router.push("/auth/login")
-      return
-    }
-
-    // If user is authenticated, fetch proverbs
-    fetchProverbs()
-  }, [authLoading, user, router])
 
   // Show loading state while checking authentication
   if (authLoading) {
@@ -88,8 +79,7 @@ export default function ExplorePage() {
     )
   }
 
-  // If not authenticated, this component won't render due to redirect in useEffect
-  // But add a fallback just in case
+  // If not authenticated, don't render the page content
   if (!user) {
     return null
   }
