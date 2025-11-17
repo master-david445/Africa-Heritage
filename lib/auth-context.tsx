@@ -14,6 +14,8 @@ interface AuthContextType {
   profile: Profile | null
   isLoading: boolean
   authError: string | null
+  login: (email: string, password: string) => Promise<void>
+  signup: (name: string, email: string, password: string) => Promise<void>
   refreshProfile: () => Promise<void>
 }
 
@@ -86,6 +88,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     hasFetchedRef.current = false
     isFetchingRef.current = false
   }, [])
+
+  const login = async (email: string, password: string) => {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
+  }
+
+  const signup = async (name: string, email: string, password: string) => {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name }
+      }
+    })
+    if (error) throw error
+  }
 
   const refreshProfile = async () => {
     if (user?.id) {
@@ -185,7 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  return <AuthContext.Provider value={{ user, profile, isLoading, authError, refreshProfile }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, profile, isLoading, authError, login, signup, refreshProfile }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {
