@@ -3,10 +3,10 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
-import type { User } from "@/lib/types"
+import type { Profile } from "@/lib/types"
 
 interface FollowersListProps {
-  users: User[]
+  users: Profile[]
   title: string
 }
 
@@ -33,11 +33,11 @@ export default function FollowersList({ users, title }: FollowersListProps) {
             <div key={user.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-400 flex items-center justify-center text-white font-bold text-sm">
-                  {user.name.substring(0, 2).toUpperCase()}
+                  {user.username.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900">{user.name}</div>
-                  <div className="text-xs text-gray-500">{user.proverbsCount} proverbs</div>
+                  <div className="font-semibold text-gray-900">{user.username}</div>
+                  <div className="text-xs text-gray-500">{user.points} points</div>
                 </div>
               </div>
               <Button
