@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useParams } from "next/navigation"
 import Header from "@/components/header"
 import CollectionDetail from "@/components/collection-detail"
 import CollectionStats from "@/components/collection-stats"
@@ -113,8 +114,9 @@ const mockProverbs: Record<string, ProverbWithUser> = {
   },
 }
 
-export default function CollectionDetailPage({ params }: { params: { collectionId: string } }) {
-  const collectionId = params.collectionId
+export default function CollectionDetailPage() {
+  const params = useParams()
+  const collectionId = params.collectionId as string
   const collection = mockCollections[collectionId as keyof typeof mockCollections]
   const [proverbs, setProverbs] = useState<ProverbWithUser[]>(
     collection ? [] : [], // Mock empty for now

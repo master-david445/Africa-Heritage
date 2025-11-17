@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
 import Header from "@/components/header"
 import UserProfileCard from "@/components/user-profile-card"
 import FollowersList from "@/components/followers-list"
@@ -16,9 +17,10 @@ import { getUserFollowers, getUserFollowing } from "@/app/actions/follows"
 import type { Profile, Proverb } from "@/lib/types"
 import type { FollowListItem } from "@/lib/types/profile"
 
-export default function ProfilePage({ params }: { params: { userId: string } }) {
+export default function ProfilePage() {
   const { user: currentUser } = useAuth()
-  const userId = params.userId
+  const params = useParams()
+  const userId = params.userId as string
 
   const [profileUser, setProfileUser] = useState<Profile | null>(null)
   const [userProverbs, setUserProverbs] = useState<Proverb[]>([])
