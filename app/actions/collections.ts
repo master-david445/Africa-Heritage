@@ -27,7 +27,7 @@ export async function getUserCollections(userId: string): Promise<Collection[]> 
     }
 
     return data || []
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[v0] Error in getUserCollections:", error)
     throw error
   }
@@ -49,7 +49,7 @@ export async function getCollectionById(collectionId: string): Promise<Collectio
     }
 
     return data
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[v0] Error in getCollectionById:", error)
     return null
   }
@@ -89,7 +89,7 @@ export async function createCollection(data: {
 
     revalidatePath("/collections")
     return collection
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[v0] Error in createCollection:", error)
     throw error
   }
