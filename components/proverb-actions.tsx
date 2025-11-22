@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Heart, MessageCircle, Bookmark, Share2, Loader2, FolderPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { generateProverbShareMetadata, shareProverb } from "@/lib/utils/share"
 import type { Proverb, Profile } from "@/lib/types"
 
 interface ProverbActionsProps {
@@ -46,27 +47,23 @@ export default function ProverbActions({
 
     setShareLoading(true)
     try {
-      const shareData = {
-        title: "African Heritage Proverb",
-        text: proverb.proverb,
-        url: window.location.href,
-      }
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+      const metadata = generateProverbShareMetadata(proverb, baseUrl)
+      const result = await shareProverb(metadata)
 
-      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-        await navigator.share(shareData)
-        toast.success("Proverb shared successfully!")
+      if (result.success) {
+        if (result.method === 'native') {
+          toast.success("Proverb shared successfully!")
+        } else {
+          toast.success("Link copied to clipboard! Share it with your friends.")
+        }
+        onShare()
       } else {
-        // Fallback: copy to clipboard
-        await navigator.clipboard.writeText(`${proverb.proverb} - ${window.location.href}`)
-        toast.success("Link copied to clipboard!")
+        toast.error("Failed to share proverb. Please try again.")
       }
     } catch (err) {
-      console.error("[v0] Share error:", err)
-      if (err instanceof Error && err.name === "NotAllowedError") {
-        toast.error("Sharing not allowed. Try copying the link instead.")
-      } else {
-        toast.error("Failed to share proverb")
-      }
+      console.error("Share error:", err)
+      toast.error("Failed to share proverb")
     } finally {
       setShareLoading(false)
     }
@@ -74,21 +71,18 @@ export default function ProverbActions({
 
   return (
     <div className="space-y-4">
-      {/* Error Message */}
       {error && (
         <div className="text-xs text-red-500 bg-red-50 p-2 rounded" role="alert">
           {error}
         </div>
       )}
 
-      {/* Social Actions */}
-      <div className="flex gap-4 text-gray-500 text-sm border-t pt-4" role="group" aria-label="Proverb actions">
+      <div className="flex flex-wrap gap-2 sm:gap-4 text-gray-500 text-sm border-t pt-4" role="group" aria-label="Proverb actions">
         <button
           onClick={onLike}
           disabled={!currentUser || isLoading}
-          className={`flex items-center gap-1 transition hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded ${
-            isLiked ? "text-red-600" : ""
-          }`}
+          className={`flex items-center gap-1 transition hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded ${isLiked ? "text-red-600" : ""
+            }`}
           aria-label={`${isLiked ? "Unlike" : "Like"} this proverb`}
           aria-pressed={isLiked}
         >
@@ -103,9 +97,8 @@ export default function ProverbActions({
         <button
           onClick={onToggleComments}
           disabled={!currentUser}
-          className={`flex items-center gap-1 transition hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded ${
-            showComments ? "text-blue-600" : ""
-          }`}
+          className={`flex items-center gap-1 transition hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded ${showComments ? "text-blue-600" : ""
+            }`}
           aria-label={`${showComments ? "Hide" : "Show"} comments`}
           aria-expanded={showComments}
         >
@@ -116,9 +109,8 @@ export default function ProverbActions({
         <button
           onClick={onBookmark}
           disabled={!currentUser || isLoading}
-          className={`flex items-center gap-1 transition hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded ${
-            isBookmarked ? "text-amber-600" : ""
-          }`}
+          className={`flex items-center gap-1 transition hover:text-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded ${isBookmarked ? "text-amber-600" : ""
+            }`}
           aria-label={`${isBookmarked ? "Remove from" : "Add to"} bookmarks`}
           aria-pressed={isBookmarked}
         >
@@ -137,7 +129,7 @@ export default function ProverbActions({
             aria-label="Add to collection"
           >
             <FolderPlus className="w-4 h-4" />
-            Add to Collection
+            <span className="hidden sm:inline">Add to Collection</span>
           </button>
         )}
 
@@ -152,11 +144,10 @@ export default function ProverbActions({
           ) : (
             <Share2 className="w-4 h-4" />
           )}
-          Share
+          <span className="hidden sm:inline">Share</span>
         </button>
       </div>
 
-      {/* Login Prompt */}
       {!currentUser && (
         <div className="text-xs text-gray-500 text-center pt-2" role="status">
           Sign in to like, comment, and bookmark

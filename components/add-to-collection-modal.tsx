@@ -8,137 +8,60 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Plus, Search, Lock, Users, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { getUserCollections } from "@/app/actions/collections"
 import type { Collection, Proverb } from "@/lib/types"
 
 interface AddToCollectionModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   proverb: Proverb | null
-  onAddToCollection?: (collectionId: string) => void
-  onCreateCollection?: (collectionData: { title: string; description: string; isPublic: boolean; isCollaborative: boolean }) => void
+  currentUser: { id: string } | null
+  onAddToCollection?: (collectionId: string) => Promise<void>
+  onCreateCollection?: (collectionData: { title: string; description: string; isPublic: boolean; isCollaborative: boolean }) => Promise<void>
 }
-
-// Mock collections data - in real app this would come from API
-const mockCollections: Collection[] = [
-  {
-    id: "col1",
-    user_id: "user1",
-    title: "Wisdom for Daily Life",
-    description: "Essential proverbs that guide us through everyday challenges and decisions.",
-    cover_image: null,
-    is_public: true,
-    is_collaborative: false,
-    contributors: ["user1"],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "col2",
-    user_id: "user5",
-    title: "Ubuntu Philosophy",
-    description: "Proverbs centered around community, unity, and interconnectedness.",
-    cover_image: null,
-    is_public: true,
-    is_collaborative: true,
-    contributors: ["user5", "user1", "user3"],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "col3",
-    user_id: "user2",
-    title: "Leadership Lessons",
-    description: "Proverbs about leadership, strength, and making wise decisions.",
-    cover_image: null,
-    is_public: true,
-    is_collaborative: false,
-    contributors: ["user2"],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-]
 
 export default function AddToCollectionModal({
   open,
   onOpenChange,
   proverb,
+  currentUser,
   onAddToCollection,
   onCreateCollection,
 }: AddToCollectionModalProps) {
-  const [collections, setCollections] = useState<Collection[]>(mockCollections)
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [isLoadingCollections, setIsLoadingCollections] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [showCreateForm, setShowCreateForm] = useState(false)
+
+  // New collection form state
   const [newCollectionTitle, setNewCollectionTitle] = useState("")
   const [newCollectionDescription, setNewCollectionDescription] = useState("")
   const [newCollectionIsPublic, setNewCollectionIsPublic] = useState(true)
   const [newCollectionIsCollaborative, setNewCollectionIsCollaborative] = useState(false)
 
-  const filteredCollections = collections.filter((col) =>
-    col.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    col.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleAddToCollection = async (collectionId: string) => {
-    if (isLoading) return
-
-    setIsLoading(true)
-    try {
-      // TODO: Implement actual API call
-      // await addProverbToCollection(collectionId, proverb?.id)
-      console.log(`Adding proverb ${proverb?.id} to collection ${collectionId}`)
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      onAddToCollection?.(collectionId)
-      onOpenChange(false)
-      toast.success("Proverb added to collection!")
-    } catch (error) {
-      console.error("[v0] Add to collection error:", error)
-      if (error instanceof Error) {
-        toast.error(`Failed to add proverb: ${error.message}`)
-      } else {
-        toast.error("Failed to add proverb to collection")
+  // Fetch collections when modal opens
+  useEffect(() => {
+    const fetchCollections = async () => {
+      if (open && currentUser) {
+        setIsLoadingCollections(true)
+        try {
+          const userCollections = await getUserCollections(currentUser.id)
+          setCollections(userCollections)
+        } catch (error) {
+          console.error("Error fetching collections:", error)
+          toast.error("Failed to load collections")
+        } finally {
+          setIsLoadingCollections(false)
+        }
       }
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleCreateCollection = () => {
-    if (!newCollectionTitle.trim()) return
-
-    const newCollection: Collection = {
-      id: `col${Date.now()}`,
-      user_id: "user1", // Mock current user
-      title: newCollectionTitle,
-      description: newCollectionDescription,
-      cover_image: null,
-      is_public: newCollectionIsPublic,
-      is_collaborative: newCollectionIsCollaborative,
-      contributors: ["user1"],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     }
 
-    setCollections(prev => [...prev, newCollection])
-    onCreateCollection?.({
-      title: newCollectionTitle,
-      description: newCollectionDescription,
-      isPublic: newCollectionIsPublic,
-      isCollaborative: newCollectionIsCollaborative,
-    })
+    fetchCollections()
+  }, [open, currentUser])
 
-    // Reset form
-    setNewCollectionTitle("")
-    setNewCollectionDescription("")
-    setNewCollectionIsPublic(true)
-    setNewCollectionIsCollaborative(false)
-    setShowCreateForm(false)
-  }
-
+  // Reset form when modal closes
   useEffect(() => {
     if (!open) {
       setSearchQuery("")
@@ -149,6 +72,54 @@ export default function AddToCollectionModal({
       setNewCollectionIsCollaborative(false)
     }
   }, [open])
+
+  const filteredCollections = collections.filter((col) =>
+    col.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    col.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const handleAddToCollection = async (collectionId: string) => {
+    if (isSubmitting || !onAddToCollection) return
+
+    setIsSubmitting(true)
+    try {
+      await onAddToCollection(collectionId)
+      onOpenChange(false)
+    } catch (error) {
+      // Error handling is done in the parent/hook
+      console.error("Error adding to collection:", error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleCreateCollection = async () => {
+    if (!newCollectionTitle.trim() || isSubmitting || !onCreateCollection) return
+
+    setIsSubmitting(true)
+    try {
+      await onCreateCollection({
+        title: newCollectionTitle,
+        description: newCollectionDescription,
+        isPublic: newCollectionIsPublic,
+        isCollaborative: newCollectionIsCollaborative,
+      })
+      // We don't close the modal here because we might want to add the proverb to the new collection immediately
+      // But the hook implementation might handle it. 
+      // For now, let's assume the parent handles the flow.
+
+      setShowCreateForm(false)
+      // Refresh collections
+      if (currentUser) {
+        const userCollections = await getUserCollections(currentUser.id)
+        setCollections(userCollections)
+      }
+    } catch (error) {
+      console.error("Error creating collection:", error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -176,15 +147,18 @@ export default function AddToCollectionModal({
 
               {/* Collections List */}
               <div className="max-h-60 overflow-y-auto space-y-2">
-                {filteredCollections.length === 0 ? (
+                {isLoadingCollections ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
+                  </div>
+                ) : filteredCollections.length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-4">No collections found.</p>
                 ) : (
                   filteredCollections.map((collection) => (
                     <div
                       key={collection.id}
-                      className={`flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer ${
-                        isLoading ? 'opacity-50 pointer-events-none' : ''
-                      }`}
+                      className={`flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer ${isSubmitting ? 'opacity-50 pointer-events-none' : ''
+                        }`}
                       onClick={() => handleAddToCollection(collection.id)}
                     >
                       <div className="flex-1">
@@ -269,10 +243,10 @@ export default function AddToCollectionModal({
                 </Button>
                 <Button
                   onClick={handleCreateCollection}
-                  disabled={!newCollectionTitle.trim() || isLoading}
+                  disabled={!newCollectionTitle.trim() || isSubmitting}
                   className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
                 >
-                  {isLoading ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Creating...

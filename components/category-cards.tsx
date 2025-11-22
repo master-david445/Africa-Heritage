@@ -42,7 +42,7 @@ const categories = [
   }
 ]
 
-export default function CategoryCards() {
+export function CategoryCards() {
   const router = useRouter()
 
   const handleCategoryClick = (categoryName: string) => {
@@ -93,3 +93,5 @@ export default function CategoryCards() {
     </section>
   )
 }
+
+export default CategoryCards

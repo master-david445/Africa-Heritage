@@ -54,7 +54,7 @@ export default function ExplorePage() {
     })
 
     setLoading(false)
-  }, [])
+  }, [loading])
 
 
   // Show loading state while checking authentication
@@ -176,3 +176,4 @@ export default function ExplorePage() {
     </>
   )
 }
+

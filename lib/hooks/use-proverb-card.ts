@@ -3,6 +3,7 @@ import { toast } from "sonner"
 import { toggleLike, isProverbLikedByUser } from "@/app/actions/likes"
 import { toggleBookmark } from "@/app/actions/bookmarks"
 import { createComment, getProverbComments } from "@/app/actions/comments"
+import { addProverbToCollection, createCollection } from "@/app/actions/collections"
 import type { Proverb, Profile, Comment, ProverbCardState, Collection } from "@/lib/types"
 
 export function useProverbCard(proverb: Proverb, currentUser: Profile | null) {
@@ -194,8 +195,7 @@ export function useProverbCard(proverb: Proverb, currentUser: Profile | null) {
     setState(prev => ({ ...prev, isLoading: true, error: null }))
 
     try {
-      // TODO: Implement actual API call to add proverb to collection
-      // await addProverbToCollection(proverb.id, collectionId)
+      await addProverbToCollection(collectionId, proverb.id)
 
       toast.success("Proverb added to collection!")
       setShowAddToCollectionModal(false)
@@ -217,8 +217,10 @@ export function useProverbCard(proverb: Proverb, currentUser: Profile | null) {
     setState(prev => ({ ...prev, isLoading: true, error: null }))
 
     try {
-      // TODO: Implement actual API call to create collection
-      // const newCollection = await createCollection(collectionData)
+      const newCollection = await createCollection(collectionData)
+
+      // Add to the new collection immediately
+      await addProverbToCollection(newCollection.id, proverb.id)
 
       toast.success("Collection created and proverb added!")
       setShowAddToCollectionModal(false)
@@ -234,7 +236,7 @@ export function useProverbCard(proverb: Proverb, currentUser: Profile | null) {
     } finally {
       setState(prev => ({ ...prev, isLoading: false }))
     }
-  }, [])
+  }, [proverb.id])
 
   return {
     ...state,

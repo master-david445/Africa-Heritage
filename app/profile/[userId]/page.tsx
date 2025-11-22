@@ -14,7 +14,8 @@ import { useAuth } from "@/lib/auth-context"
 import { getUserProfileById, getProfileStats } from "@/app/actions/profile"
 import { getProverbsByUser } from "@/app/actions/proverbs"
 import { getUserFollowers, getUserFollowing } from "@/app/actions/follows"
-import type { Profile, Proverb } from "@/lib/types"
+import { getUserBadges } from "@/app/actions/badges"
+import type { Profile, Proverb, Badge } from "@/lib/types"
 import type { FollowListItem } from "@/lib/types/profile"
 
 export default function ProfilePage() {
@@ -26,6 +27,7 @@ export default function ProfilePage() {
   const [userProverbs, setUserProverbs] = useState<Proverb[]>([])
   const [followers, setFollowers] = useState<any[]>([])
   const [following, setFollowing] = useState<any[]>([])
+  const [badges, setBadges] = useState<Badge[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"proverbs" | "followers" | "following" | "achievements" | "settings">("proverbs")
@@ -59,6 +61,10 @@ export default function ProfilePage() {
         ])
         setFollowers(followersData || [])
         setFollowing(followingData || [])
+
+        // Load badges
+        const userBadges = await getUserBadges(userId)
+        setBadges(userBadges)
 
       } catch (err) {
         console.error("Error loading profile:", err)
@@ -138,7 +144,7 @@ export default function ProfilePage() {
     followersCount: (profileUser as any).followersCount || 0,
     followingCount: (profileUser as any).followingCount || 0,
     points: profileUser.points,
-    badges: [], // TODO: Implement badge system
+    badges: badges,
     isAdmin: profileUser.is_admin,
     isVerified: profileUser.is_verified,
     isSuspended: profileUser.is_suspended,
@@ -164,117 +170,112 @@ export default function ProfilePage() {
           {/* Main Content */}
           <div className="xl:col-span-2">
             <div className="max-w-4xl mx-auto">
-            {/* Tabs */}
-            <div className="flex gap-2 md:gap-4 mb-6 border-b border-gray-200 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
-              <button
-                onClick={() => setActiveTab("proverbs")}
-                className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "proverbs"
-                    ? "text-orange-600 border-b-2 border-orange-600"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                Proverbs ({userProverbs.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("followers")}
-                className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "followers"
-                    ? "text-orange-600 border-b-2 border-orange-600"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                Followers ({followers.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("following")}
-                className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "following"
-                    ? "text-orange-600 border-b-2 border-orange-600"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                Following ({following.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("achievements")}
-                className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
-                  activeTab === "achievements"
-                    ? "text-orange-600 border-b-2 border-orange-600"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                Achievements
-              </button>
-              {isOwnProfile && (
+              {/* Tabs */}
+              <div className="flex gap-2 md:gap-4 mb-6 border-b border-gray-200 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
                 <button
-                  onClick={() => setActiveTab("settings")}
-                  className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${
-                    activeTab === "settings"
+                  onClick={() => setActiveTab("proverbs")}
+                  className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "proverbs"
                       ? "text-orange-600 border-b-2 border-orange-600"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
-                  Settings
+                  Proverbs ({userProverbs.length})
                 </button>
-              )}
-            </div>
-
-            {/* Tab Content */}
-            {activeTab === "proverbs" && (
-              <div className="space-y-4">
-                {userProverbs.length === 0 ? (
-                  <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                    <p className="text-gray-500">
-                      {isOwnProfile ? "You haven't shared any proverbs yet" : "No proverbs shared yet"}
-                    </p>
-                    {isOwnProfile && (
-                      <p className="text-sm text-gray-400 mt-2">
-                        Click "Share Proverb" to share your first proverb!
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  userProverbs.map((proverb) => (
-                    <ProverbCard
-                      key={proverb.id}
-                      proverb={proverb}
-                      currentUser={currentUser ? {
-                        id: currentUser.id,
-                        username: currentUser.email?.split('@')[0] || 'user',
-                        email: currentUser.email || '',
-                        bio: null,
-                        country: null,
-                        avatar_url: null,
-                        points: 0,
-                        reputation_score: 0,
-                        is_admin: false,
-                        is_verified: false,
-                        is_suspended: false,
-                        created_at: '',
-                        updated_at: ''
-                      } : null}
-                    />
-                  ))
+                <button
+                  onClick={() => setActiveTab("followers")}
+                  className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "followers"
+                      ? "text-orange-600 border-b-2 border-orange-600"
+                      : "text-gray-600 hover:text-gray-900"
+                    }`}
+                >
+                  Followers ({followers.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab("following")}
+                  className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "following"
+                      ? "text-orange-600 border-b-2 border-orange-600"
+                      : "text-gray-600 hover:text-gray-900"
+                    }`}
+                >
+                  Following ({following.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab("achievements")}
+                  className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "achievements"
+                      ? "text-orange-600 border-b-2 border-orange-600"
+                      : "text-gray-600 hover:text-gray-900"
+                    }`}
+                >
+                  Achievements
+                </button>
+                {isOwnProfile && (
+                  <button
+                    onClick={() => setActiveTab("settings")}
+                    className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "settings"
+                        ? "text-orange-600 border-b-2 border-orange-600"
+                        : "text-gray-600 hover:text-gray-900"
+                      }`}
+                  >
+                    Settings
+                  </button>
                 )}
               </div>
-            )}
 
-            {activeTab === "followers" && <FollowersList users={followers} title="Followers" />}
+              {/* Tab Content */}
+              {activeTab === "proverbs" && (
+                <div className="space-y-4">
+                  {userProverbs.length === 0 ? (
+                    <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                      <p className="text-gray-500">
+                        {isOwnProfile ? "You haven't shared any proverbs yet" : "No proverbs shared yet"}
+                      </p>
+                      {isOwnProfile && (
+                        <p className="text-sm text-gray-400 mt-2">
+                          Click "Share Proverb" to share your first proverb!
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    userProverbs.map((proverb) => (
+                      <ProverbCard
+                        key={proverb.id}
+                        proverb={proverb}
+                        currentUser={currentUser ? {
+                          id: currentUser.id,
+                          username: currentUser.email?.split('@')[0] || 'user',
+                          email: currentUser.email || '',
+                          bio: null,
+                          country: null,
+                          avatar_url: null,
+                          points: 0,
+                          reputation_score: 0,
+                          is_admin: false,
+                          is_verified: false,
+                          is_suspended: false,
+                          created_at: '',
+                          updated_at: ''
+                        } : null}
+                      />
+                    ))
+                  )}
+                </div>
+              )}
 
-            {activeTab === "following" && <FollowersList users={following} title="Following" />}
+              {activeTab === "followers" && <FollowersList users={followers} title="Followers" />}
 
-            {activeTab === "achievements" && (
-              <BadgeShowcase badges={userForComponents.badges} userPoints={profileUser.points} />
-            )}
+              {activeTab === "following" && <FollowersList users={following} title="Following" />}
 
-            {activeTab === "settings" && isOwnProfile && (
-              <ErrorBoundary level="component" name="ProfileSettings">
-                <ProfileSettings profile={profileUser} onProfileUpdate={handleProfileUpdate} />
-              </ErrorBoundary>
-            )}
-          </div>
+              {activeTab === "achievements" && (
+                <BadgeShowcase badges={userForComponents.badges} userPoints={profileUser.points} />
+              )}
+
+              {activeTab === "settings" && isOwnProfile && (
+                <ErrorBoundary level="component" name="ProfileSettings">
+                  <ProfileSettings profile={profileUser} onProfileUpdate={handleProfileUpdate} />
+                </ErrorBoundary>
+              )}
             </div>
+          </div>
         </div>
       </main>
     </>

@@ -23,6 +23,9 @@ const nextConfig = {
     ],
   },
   serverExternalPackages: ['@supabase/supabase-js'],
+  experimental: {
+    allowedDevOrigins: ['localhost:3000', '192.168.1.38:3000', '127.0.0.1:3000'],
+  },
   // Add security headers
   async headers() {
     return [
@@ -45,14 +48,15 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
+          /*
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.supabase.co *.vercel-analytics.com *.vercel-insights.com va.vercel-scripts.com https://vitals.vercel-insights.com",
-              "style-src 'self'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https://images.unsplash.com https://*.supabase.co https://avatars.githubusercontent.com blob:",
-              "font-src 'self' data:",
+              "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' *.supabase.co *.vercel-analytics.com *.vercel-insights.com wss://*.supabase.co https://vitals.vercel-insights.com",
               "frame-src 'self' *.supabase.co",
               "object-src 'none'",
@@ -60,6 +64,7 @@ const nextConfig = {
               "form-action 'self'",
             ].join('; '),
           },
+          */
         ],
       },
     ]

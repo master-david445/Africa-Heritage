@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Proverb, Profile } from "@/lib/types"
 
-export default function ProverbOfTheDay() {
+export function ProverbOfTheDay() {
   const [proverb, setProverb] = useState<Proverb | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -129,3 +129,5 @@ export default function ProverbOfTheDay() {
     </article>
   )
 }
+
+export default ProverbOfTheDay

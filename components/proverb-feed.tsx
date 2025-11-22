@@ -4,6 +4,7 @@ import { useState } from "react"
 import ProverbCard from "@/components/proverb-card"
 import ProverbCardSkeleton from "@/components/proverb-card-skeleton"
 import SocialStats from "@/components/social-stats"
+import CreateProverbModal from "@/components/create-proverb-modal"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { getAllProverbs } from "@/app/actions/proverbs"
@@ -19,10 +20,24 @@ export default function ProverbFeed({ initialProverbs, currentUser }: ProverbFee
   const [isLoading, setIsLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialProverbs.length === 20)
   const [error, setError] = useState<string | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const handleCreateProverb = () => {
-    // This will be connected to a modal for creating proverbs
-    console.log("Create proverb")
+    setIsCreateModalOpen(true)
+  }
+
+  const handleProverbCreated = async () => {
+    // Refresh the feed
+    setIsLoading(true)
+    try {
+      const newProverbs = await getAllProverbs(20, 0)
+      setProverbs(newProverbs)
+      setHasMore(newProverbs.length === 20)
+    } catch (error) {
+      console.error("Error refreshing proverbs:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleLoadMore = async () => {
@@ -122,7 +137,7 @@ export default function ProverbFeed({ initialProverbs, currentUser }: ProverbFee
         {/* Sidebar */}
         <aside className="space-y-6" aria-label="Sidebar">
           {/* Social Stats */}
-          <SocialStats proverbs={proverbs} />
+          <SocialStats />
 
           {/* Trending */}
           <section className="bg-white rounded-lg shadow-md p-6" aria-labelledby="trending-heading">
@@ -143,6 +158,12 @@ export default function ProverbFeed({ initialProverbs, currentUser }: ProverbFee
           </section>
         </aside>
       </div>
+
+      <CreateProverbModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onSuccess={handleProverbCreated}
+      />
     </main>
   )
 }

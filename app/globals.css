@@ -2,6 +2,67 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@layer base {
+  /* Base mobile optimizations */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent zoom on input focus on mobile */
+  input,
+  select,
+  textarea,
+  button {
+    font-size: 16px !important; /* Prevent iOS zoom on focus */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+
+  /* Better touch targets for mobile */
+  button,
+  [role="button"],
+  a[href] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  }
+
+  /* Smooth scrolling for mobile */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Prevent long words from breaking layout */
+  p, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /* Improve image rendering */
+  img {
+    max-width: 100%;
+    height: auto;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+  }
+
+  /* Remove default button styles on iOS */
+  button {
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

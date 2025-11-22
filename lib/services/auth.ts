@@ -8,17 +8,29 @@ import type { SignInInput } from "@/lib/validations/profile"
 
 export class AuthService {
   /**
-   * Client-side password verification - limited functionality
-   * For full password verification, use server actions
+   * Client-side password verification
+   * Verifies the password by attempting to sign in with the current email
    */
   static async verifyCurrentPassword(currentPassword: string): Promise<boolean> {
-    // Client-side password verification is limited
-    // This method now only checks if a user is authenticated
     try {
       const supabase = createClient()
+
+      // Get current user to find their email
       const { data: { user } } = await supabase.auth.getUser()
-      return !!user
-    } catch {
+      if (!user || !user.email) {
+        return false
+      }
+
+      // Attempt to sign in with the current email and provided password
+      // This verifies the password is correct without changing the current session
+      const { error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      })
+
+      return !error
+    } catch (error) {
+      console.error("[AUTH_SERVICE] Password verification error:", error)
       return false
     }
   }

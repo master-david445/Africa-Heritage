@@ -23,9 +23,11 @@ export default function PWAInstall() {
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log("PWA: beforeinstallprompt fired")
       e.preventDefault()
       setDeferredPrompt(e)
       setShowInstall(true)
+      console.log("PWA: showInstall set to true")
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)

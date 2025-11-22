@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth-context"
 import { getCurrentUser } from "@/app/actions/profile"
 import { searchProverbs, getSearchSuggestions } from "@/app/actions/search"
 import type { Proverb, Profile, SearchFilters } from "@/lib/types"
+import Header from "@/components/header"
 
 // Debounce utility function
 function debounce<T extends (...args: any[]) => any>(
@@ -239,7 +240,8 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      <Header />
+      {/* Search Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4 mb-4">
@@ -284,9 +286,8 @@ export default function SearchPage() {
                           {suggestions.categories.map((category, index) => (
                             <button
                               key={`category-${category}`}
-                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
-                                selectedSuggestionIndex === index ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                              }`}
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${selectedSuggestionIndex === index ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                }`}
                               onClick={() => selectSuggestion({ type: 'category', value: category })}
                             >
                               {category}
@@ -305,9 +306,8 @@ export default function SearchPage() {
                             return (
                               <button
                                 key={`country-${country}`}
-                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
-                                  selectedSuggestionIndex === globalIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                                }`}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${selectedSuggestionIndex === globalIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                  }`}
                                 onClick={() => selectSuggestion({ type: 'country', value: country })}
                               >
                                 {country}
@@ -327,9 +327,8 @@ export default function SearchPage() {
                             return (
                               <button
                                 key={`language-${language}`}
-                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
-                                  selectedSuggestionIndex === globalIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                                }`}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${selectedSuggestionIndex === globalIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                  }`}
                                 onClick={() => selectSuggestion({ type: 'language', value: language })}
                               >
                                 {language}
@@ -349,9 +348,8 @@ export default function SearchPage() {
                             return (
                               <button
                                 key={`author-${author}`}
-                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
-                                  selectedSuggestionIndex === globalIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                                }`}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${selectedSuggestionIndex === globalIndex ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                  }`}
                                 onClick={() => selectSuggestion({ type: 'author', value: author })}
                               >
                                 {author}

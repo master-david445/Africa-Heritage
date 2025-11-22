@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { createProverbSchema, CreateProverbInput } from "@/lib/validations"
+import { checkAndAwardBadges } from "@/app/actions/badges"
 import type { Proverb } from "@/lib/types"
 
 export async function createProverb(formData: CreateProverbInput) {
@@ -67,6 +68,11 @@ export async function createProverb(formData: CreateProverbInput) {
     throw error
   }
 
+  // Check and award badges asynchronously
+  checkAndAwardBadges(user.id).catch(err =>
+    console.error("Error awarding badges:", err)
+  )
+
   return data
 }
 
@@ -86,27 +92,37 @@ export async function getProverbsByUser(userId: string) {
 export async function getAllProverbs(limit = 20, offset = 0) {
   const supabase = await createClient()
 
-  // Optimized query: fetch proverbs first, then batch count queries
-  const { data, error } = await supabase
-    .from("proverbs")
-    .select(`
-      *,
-      profiles:user_id(id, username, avatar_url)
-    `)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1)
-
-  if (error) throw error
-
-  if (!data || data.length === 0) {
-    return []
-  }
-
-  // Batch count queries for better performance (single query per table instead of per proverb)
-  const proverbIds = data.map(p => p.id)
-
   try {
-    const [likesResult, commentsResult, bookmarksResult] = await Promise.all([
+    console.log(`[getAllProverbs] Fetching proverbs with limit=${limit}, offset=${offset}`)
+
+    // First, get the proverbs with user profiles
+    const { data, error } = await supabase
+      .from("proverbs")
+      .select(`
+        *,
+        profiles:user_id(id, username, avatar_url)
+      `)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      console.error('[getAllProverbs] Supabase error:', error)
+      if (error.code === '42501') {
+        console.error('[getAllProverbs] RLS Policy Violation. Check if you have proper SELECT policies on the proverbs table.')
+      }
+      throw error
+    }
+
+    if (!data || data.length === 0) {
+      console.log('[getAllProverbs] No proverbs found')
+      return []
+    }
+
+    // Extract proverb IDs for counting related data
+    const proverbIds = data.map(proverb => proverb.id)
+
+    // Fetch counts in parallel with error handling
+    const [likesResult, commentsResult, bookmarksResult] = await Promise.allSettled([
       supabase
         .from("likes")
         .select("proverb_id")
@@ -121,40 +137,47 @@ export async function getAllProverbs(limit = 20, offset = 0) {
         .in("proverb_id", proverbIds),
     ])
 
-    // Create efficient count maps
+    // Process counts
     const likesCount = new Map<string, number>()
     const commentsCount = new Map<string, number>()
     const bookmarksCount = new Map<string, number>()
 
-    // Single pass counting for each result set
-    likesResult.data?.forEach(like => {
-      likesCount.set(like.proverb_id, (likesCount.get(like.proverb_id) || 0) + 1)
-    })
+    // Process likes count
+    if (likesResult.status === 'fulfilled' && likesResult.value.data) {
+      likesResult.value.data.forEach(like => {
+        likesCount.set(like.proverb_id, (likesCount.get(like.proverb_id) || 0) + 1)
+      })
+    }
 
-    commentsResult.data?.forEach(comment => {
-      commentsCount.set(comment.proverb_id, (commentsCount.get(comment.proverb_id) || 0) + 1)
-    })
+    // Process comments count
+    if (commentsResult.status === 'fulfilled' && commentsResult.value.data) {
+      commentsResult.value.data.forEach(comment => {
+        commentsCount.set(comment.proverb_id, (commentsCount.get(comment.proverb_id) || 0) + 1)
+      })
+    }
 
-    bookmarksResult.data?.forEach(bookmark => {
-      bookmarksCount.set(bookmark.proverb_id, (bookmarksCount.get(bookmark.proverb_id) || 0) + 1)
-    })
+    // Process bookmarks count
+    if (bookmarksResult.status === 'fulfilled' && bookmarksResult.value.data) {
+      bookmarksResult.value.data.forEach(bookmark => {
+        bookmarksCount.set(bookmark.proverb_id, (bookmarksCount.get(bookmark.proverb_id) || 0) + 1)
+      })
+    }
 
-    // Add counts to proverbs
-    return data.map(proverb => ({
+    // Enhance proverbs with counts
+    const proverbsWithCounts = data.map(proverb => ({
       ...proverb,
       likes_count: likesCount.get(proverb.id) || 0,
       comments_count: commentsCount.get(proverb.id) || 0,
       bookmarks_count: bookmarksCount.get(proverb.id) || 0,
     }))
-  } catch (countError) {
-    console.warn('Count queries failed, returning proverbs without counts:', countError)
-    // Return proverbs without counts if count queries fail
-    return data.map(proverb => ({
-      ...proverb,
-      likes_count: 0,
-      comments_count: 0,
-      bookmarks_count: 0,
-    }))
+
+    console.log(`[getAllProverbs] Successfully fetched ${proverbsWithCounts.length} proverbs`)
+    return proverbsWithCounts
+
+  } catch (error) {
+    console.error('[getAllProverbs] Error:', error)
+    // Return empty array instead of throwing to prevent UI crash
+    return []
   }
 }
 
@@ -228,7 +251,10 @@ export async function getProverbOfTheDay(): Promise<Proverb> {
       .select()
       .single()
 
-    if (insertError) throw new Error("Failed to create tracker")
+    if (insertError) {
+      console.error("Failed to create tracker:", insertError)
+      throw new Error(`Failed to create tracker: ${insertError.message}`)
+    }
     tracker = newTracker
   }
 

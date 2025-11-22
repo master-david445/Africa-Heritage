@@ -67,13 +67,6 @@ export const metadata: Metadata = {
     apple: "/logo.svg",
   },
   manifest: "/manifest.json",
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
-  themeColor: '#ea580c', // terracotta-orange
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -81,18 +74,43 @@ export const metadata: Metadata = {
   },
 }
 
+// Viewport configuration for Next.js 13+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+  themeColor: '#ea580c',
+} as const;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Mobile debug component (development only)
+  function MobileDebugInfo() {
+    if (process.env.NODE_ENV === 'production') return null;
+
+    return (
+      <div className="fixed bottom-2 right-2 z-50 hidden max-w-[200px] rounded-lg bg-black/80 p-2 text-xs text-white backdrop-blur-sm sm:block">
+        <div>Viewport: {typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : 'loading...'}</div>
+        <div className="mt-1 text-[10px] opacity-75">
+          {typeof navigator !== 'undefined' ? navigator.userAgent : ''}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <html lang="en" className={`${montserrat.variable} ${playfairDisplay.variable}`}>
+    <html lang="en" className={`${montserrat.variable} ${playfairDisplay.variable}`} suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <ErrorBoundary level="app" name="RootLayout" enableSentry={true}>
           <QueryProvider>
             <AuthProvider>
               {children}
+              <MobileDebugInfo />
               <PWAInstall />
               <Toaster position="top-right" richColors />
             </AuthProvider>
