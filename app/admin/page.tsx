@@ -40,7 +40,7 @@ export default function AdminDashboard() {
     // Fetch admin data only once
     if (!hasFetchedRef.current) {
       hasFetchedRef.current = true
-      
+
       async function fetchAdminData() {
         try {
           setDataLoading(true)
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
         <div className="text-center max-w-md">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
           <p className="text-gray-600 mb-4">
-            You don't have admin privileges. Current status:
+            You don&apos;t have admin privileges. Current status:
           </p>
           <div className="bg-white p-4 rounded-lg shadow text-left text-sm">
             <p><strong>User ID:</strong> {user?.id || 'None'}</p>
@@ -251,7 +251,6 @@ export default function AdminDashboard() {
                 <TabsTrigger value="users">Users</TabsTrigger>
                 <TabsTrigger value="guidelines">Guidelines</TabsTrigger>
               </TabsList>
-
               <TabsContent value="reports" className="space-y-4 mt-4">
                 {reports.length === 0 ? (
                   <div className="text-center py-8">
@@ -349,10 +348,10 @@ export default function AdminDashboard() {
                   </ul>
                 </div>
               </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            </Tabs >
+          </CardContent >
+        </Card >
+      </div >
+    </div >
   )
 }

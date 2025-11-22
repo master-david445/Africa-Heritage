@@ -19,7 +19,7 @@ function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout
+  let timeout: ReturnType<typeof setTimeout>
   return (...args: Parameters<T>) => {
     clearTimeout(timeout)
     timeout = setTimeout(() => func(...args), wait)
@@ -81,10 +81,6 @@ export default function SearchPage() {
         offset: 0,
       })
       setResults(searchResults)
-      setHasSearched(true)
-    } catch (error) {
-      console.error("[v0] Search error:", error)
-      setResults([])
       setHasSearched(true)
     } finally {
       setIsLoading(false)
@@ -153,6 +149,7 @@ export default function SearchPage() {
   }
 
   // Debounced fetch suggestions
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedFetchSuggestions = useCallback(
     debounce((searchQuery: string) => {
       fetchSuggestions(searchQuery)

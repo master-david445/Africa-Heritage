@@ -106,7 +106,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
                 Oops! Something went wrong
               </h1>
               <p className="text-gray-600 mb-6">
-                We're sorry, but the application encountered an unexpected error.
+                We&apos;re sorry, but the application encountered an unexpected error.
                 Our team has been notified and is working to fix this issue.
               </p>
 
@@ -158,18 +158,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-6 h-6 text-orange-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {level === 'page' ? 'Page Error' : 'Component Error'}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {level === 'page'
-                ? 'This page encountered an error. Please try refreshing.'
-                : `The ${name} component encountered an error.`
-              }
-            </p>
-
             <Alert className="mb-4">
-              <Bug className="h-4 w-4" />
               <AlertDescription className="text-xs">
                 Error ID: {this.state.errorId}
               </AlertDescription>

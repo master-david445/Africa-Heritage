@@ -139,17 +139,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (isMounted) {
           setUser(session?.user || null)
 
+          // Don't block the UI on profile fetch
+          setIsLoading(false)
+
           if (session?.user) {
-            try {
-              await fetchProfile(session.user.id)
-            } catch (profileError) {
+            fetchProfile(session.user.id).catch(profileError => {
               console.error('Profile fetch error:', profileError)
-              // Continue even if profile fetch fails
-            }
+            })
           } else {
             setProfile(null)
           }
-          setIsLoading(false)
         }
       } catch (err) {
         console.error('Auth initialization error:', err)
@@ -191,7 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       subscription?.unsubscribe()
     }
-  }, [])
+  }, [fetchProfile])
 
   return <AuthContext.Provider value={{ user, profile, isLoading, authError, login, signup, refreshProfile }}>{children}</AuthContext.Provider>
 }

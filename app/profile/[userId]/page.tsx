@@ -175,8 +175,8 @@ export default function ProfilePage() {
                 <button
                   onClick={() => setActiveTab("proverbs")}
                   className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "proverbs"
-                      ? "text-orange-600 border-b-2 border-orange-600"
-                      : "text-gray-600 hover:text-gray-900"
+                    ? "text-orange-600 border-b-2 border-orange-600"
+                    : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Proverbs ({userProverbs.length})
@@ -184,8 +184,8 @@ export default function ProfilePage() {
                 <button
                   onClick={() => setActiveTab("followers")}
                   className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "followers"
-                      ? "text-orange-600 border-b-2 border-orange-600"
-                      : "text-gray-600 hover:text-gray-900"
+                    ? "text-orange-600 border-b-2 border-orange-600"
+                    : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Followers ({followers.length})
@@ -193,8 +193,8 @@ export default function ProfilePage() {
                 <button
                   onClick={() => setActiveTab("following")}
                   className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "following"
-                      ? "text-orange-600 border-b-2 border-orange-600"
-                      : "text-gray-600 hover:text-gray-900"
+                    ? "text-orange-600 border-b-2 border-orange-600"
+                    : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Following ({following.length})
@@ -202,8 +202,8 @@ export default function ProfilePage() {
                 <button
                   onClick={() => setActiveTab("achievements")}
                   className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "achievements"
-                      ? "text-orange-600 border-b-2 border-orange-600"
-                      : "text-gray-600 hover:text-gray-900"
+                    ? "text-orange-600 border-b-2 border-orange-600"
+                    : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Achievements
@@ -212,8 +212,8 @@ export default function ProfilePage() {
                   <button
                     onClick={() => setActiveTab("settings")}
                     className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "settings"
-                        ? "text-orange-600 border-b-2 border-orange-600"
-                        : "text-gray-600 hover:text-gray-900"
+                      ? "text-orange-600 border-b-2 border-orange-600"
+                      : "text-gray-600 hover:text-gray-900"
                       }`}
                   >
                     Settings
@@ -231,7 +231,7 @@ export default function ProfilePage() {
                       </p>
                       {isOwnProfile && (
                         <p className="text-sm text-gray-400 mt-2">
-                          Click "Share Proverb" to share your first proverb!
+                          Click &quot;Share Proverb&quot; to share your first proverb!
                         </p>
                       )}
                     </div>
@@ -276,8 +276,8 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-        </div>
-      </main>
+        </div >
+      </main >
     </>
   )
 }

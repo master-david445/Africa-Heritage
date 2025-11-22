@@ -57,8 +57,8 @@ export default function ExplorePage() {
   }, [loading])
 
 
-  // Show loading state while checking authentication
-  if (authLoading) {
+  // Show loading state only if we have no data and are loading
+  if (loading && proverbs.length === 0) {
     return (
       <>
         <Header />
@@ -66,9 +66,6 @@ export default function ExplorePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center mb-12">
               <h1 className="text-4xl font-bold text-gray-900 mb-4">Explore African Wisdom</h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Checking authentication...
-              </p>
               <div className="mt-8 flex justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
               </div>
@@ -77,11 +74,6 @@ export default function ExplorePage() {
         </main>
       </>
     )
-  }
-
-  // If not authenticated, don't render the page content
-  if (!user) {
-    return null
   }
 
   return (

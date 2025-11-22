@@ -289,7 +289,7 @@ export async function getProverbOfTheDay(): Promise<Proverb> {
   }
 
   // Fetch proverb with optimized single query including counts
-  const { data: proverb, error: proverbError } = await supabase
+  let { data: proverb, error: proverbError } = await supabase
     .from("proverbs")
     .select(`
       *,
@@ -299,7 +299,24 @@ export async function getProverbOfTheDay(): Promise<Proverb> {
     .range(currentIndex, currentIndex)
     .single()
 
-  if (proverbError || !proverb) throw new Error("Failed to fetch proverb")
+  // Fallback: If specific index fails (e.g. deletion), try getting the first proverb
+  if (proverbError || !proverb) {
+    console.warn("Proverb at index failed, falling back to first proverb", proverbError)
+    const { data: fallbackProverb, error: fallbackError } = await supabase
+      .from("proverbs")
+      .select(`
+        *,
+        profiles:user_id(id, username, avatar_url, country)
+        `)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .single()
+
+    if (fallbackError || !fallbackProverb) {
+      throw new Error("Failed to fetch any proverb")
+    }
+    proverb = fallbackProverb
+  }
 
   // Get counts efficiently
   const [likesResult, commentsResult] = await Promise.all([
