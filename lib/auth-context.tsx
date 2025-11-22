@@ -116,83 +116,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = createClient()
     let isMounted = true
-    let timeoutId: NodeJS.Timeout
-    let timedOut = false
 
-    const MAX_RETRIES = 3;
-  const RETRY_DELAY = 2000; // 2 seconds
+    const initializeAuth = async (): Promise<void> => {
+      if (!isMounted) return
 
-  const initializeAuth = async (attempt = 0): Promise<void> => {
-    if (!isMounted) return;
-    
-    setAuthError(null);
+      setAuthError(null)
 
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession()
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
 
-      // Check if timed out
-      if (timedOut) {
-        return;
-      }
+        if (error) {
+          console.error('Auth session error:', error)
+          if (isMounted) {
+            setAuthError(`Connection error: ${error.message}`)
+            setUser(null)
+            setProfile(null)
+            setIsLoading(false)
+          }
+          return
+        }
 
-      // Clear the timeout since we got a response
-      clearTimeout(timeoutId);
-
-      if (error) {
         if (isMounted) {
-          if (attempt < MAX_RETRIES) {
-            // Retry on error
-            setTimeout(() => initializeAuth(attempt + 1), RETRY_DELAY * (attempt + 1));
-            return;
-          }
-          setAuthError(`Connection error: ${error.message}. Please check your internet connection.`);
-          setUser(null);
-          setProfile(null);
-          setIsLoading(false);
-        }
-        return;
-      }
+          setUser(session?.user || null)
 
-      if (isMounted) {
-        setUser(session?.user || null);
-
-        if (session?.user) {
-          try {
-            await fetchProfile(session.user.id);
-          } catch (profileError) {
-            console.error('Profile fetch error:', profileError);
-            // Continue even if profile fetch fails
+          if (session?.user) {
+            try {
+              await fetchProfile(session.user.id)
+            } catch (profileError) {
+              console.error('Profile fetch error:', profileError)
+              // Continue even if profile fetch fails
+            }
+          } else {
+            setProfile(null)
           }
-        } else {
-          setProfile(null);
+          setIsLoading(false)
         }
-        setIsLoading(false);
-      }
-    } catch (err) {
-      console.error('Auth initialization error:', err);
-      clearTimeout(timeoutId);
-      if (isMounted) {
-        if (attempt < MAX_RETRIES) {
-          // Retry on error
-          setTimeout(() => initializeAuth(attempt + 1), RETRY_DELAY * (attempt + 1));
-          return;
+      } catch (err) {
+        console.error('Auth initialization error:', err)
+        if (isMounted) {
+          setAuthError('Unable to connect. Please refresh the page.')
+          setUser(null)
+          setProfile(null)
+          setIsLoading(false)
         }
-        setAuthError('Unable to connect. Please check your internet connection and refresh.');
-        setUser(null);
-        setProfile(null);
-        setIsLoading(false);
       }
     }
-  }
-
-    // Set error state after timeout to prevent infinite loading
-    timeoutId = setTimeout(() => {
-      timedOut = true;
-      if (isMounted) {
-        setAuthError('Taking longer than expected. Please check your connection or try again.');
-        // Don't set isLoading to false here, let the retry logic handle it
-      }
-    }, 15000) // Increased to 15 second timeout for mobile
 
     initializeAuth()
 
@@ -218,7 +186,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false
-      clearTimeout(timeoutId)
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
       }
