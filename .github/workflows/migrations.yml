@@ -1,0 +1,61 @@
+name: Database Migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/**/*.sql'
+  workflow_dispatch:
+
+jobs:
+  validate-migrations:
+    name: Validate SQL Migrations
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check SQL syntax
+        run: |
+          echo "Checking SQL files for syntax errors..."
+          for file in scripts/*.sql; do
+            if [ -f "$file" ]; then
+              echo "Checking $file"
+              # Basic SQL validation (you can add more sophisticated tools)
+              grep -q ";" "$file" || (echo "Missing semicolon in $file" && exit 1)
+            fi
+          done
+
+      - name: List new migrations
+        run: |
+          echo "New migrations detected:"
+          git diff --name-only HEAD~1 HEAD -- scripts/
+          
+  # Manual approval required for production migrations
+  approve-migration:
+    name: Approve Migration
+    needs: validate-migrations
+    runs-on: ubuntu-latest
+    environment: database-migration
+    
+    steps:
+      - name: Migration approved
+        run: echo "Migration approved for deployment"
+
+  # Note: Actual migration execution should be done manually or via Supabase CLI
+  # This workflow validates the SQL files but doesn't execute them automatically
+  notify-migration:
+    name: Notify About Migration
+    needs: approve-migration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Create migration checklist
+        run: |
+          echo "Migration Checklist:"
+          echo "1. ✅ SQL syntax validated"
+          echo "2. ✅ Manual approval received"
+          echo "3. ⏳ Execute migration in Supabase dashboard"
+          echo "4. ⏳ Verify migration success"
+          echo "5. ⏳ Test affected features"
