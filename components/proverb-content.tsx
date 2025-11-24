@@ -8,17 +8,17 @@ export default function ProverbContent({ proverb }: ProverbContentProps) {
   return (
     <article>
       {/* Proverb Text */}
-      <blockquote className="font-serif text-lg text-gray-800 mb-2 italic">
+      <blockquote className="font-serif text-lg text-card-foreground mb-2 italic">
         {proverb.proverb}
       </blockquote>
 
       {/* Meaning */}
-      <p className="text-gray-600 mb-4">{proverb.meaning}</p>
+      <p className="text-muted-foreground mb-4">{proverb.meaning}</p>
 
       {/* Context (if available) */}
       {proverb.context && (
-        <div className="bg-orange-50 border-l-4 border-orange-200 p-3 mb-4">
-          <p className="text-sm text-gray-700 italic">{proverb.context}</p>
+        <div className="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-200 dark:border-orange-700 p-3 mb-4">
+          <p className="text-sm text-muted-foreground italic">{proverb.context}</p>
         </div>
       )}
 
@@ -28,7 +28,7 @@ export default function ProverbContent({ proverb }: ProverbContentProps) {
           {proverb.categories.map((category: string) => (
             <span
               key={category}
-              className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full"
+              className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-1 rounded-full"
             >
               {category}
             </span>

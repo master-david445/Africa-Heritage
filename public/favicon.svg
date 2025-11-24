@@ -1,0 +1,23 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- African Talking Drum Icon -->
+  <g transform="translate(50, 50)">
+    <!-- Top drum head -->
+    <ellipse cx="0" cy="-25" rx="25" ry="8" fill="#D97706"/>
+    
+    <!-- Drum body -->
+    <rect x="-25" y="-25" width="50" height="50" fill="#B45309"/>
+    
+    <!-- Bottom drum head -->
+    <ellipse cx="0" cy="25" rx="25" ry="8" fill="#92400E"/>
+    
+    <!-- Drum ropes/tension cords -->
+    <path d="M -20,-20 L -25,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    <path d="M -10,-20 L -15,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    <path d="M 0,-20 L 0,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    <path d="M 10,-20 L 15,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    <path d="M 20,-20 L 25,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    
+    <!-- Decorative center pattern -->
+    <circle cx="0" cy="0" r="3" fill="#FDE68A"/>
+  </g>
+</svg>

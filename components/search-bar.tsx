@@ -138,7 +138,7 @@ export default function SearchBar({ placeholder = "Search for proverbs, wisdom, 
   return (
     <form onSubmit={handleSubmit} className={`relative w-full max-w-2xl ${className}`}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
         <Input
           ref={inputRef}
           type="text"
@@ -146,7 +146,7 @@ export default function SearchBar({ placeholder = "Search for proverbs, wisdom, 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="pl-10 pr-4 py-3 text-lg border-2 border-gray-200 focus:border-orange-500 rounded-lg shadow-sm"
+          className="pl-10 pr-4 py-3 text-lg bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-orange-500 dark:focus:border-orange-400 rounded-lg shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
           aria-label="Search proverbs"
         />
 
@@ -154,25 +154,24 @@ export default function SearchBar({ placeholder = "Search for proverbs, wisdom, 
         {showSuggestions && (
           <div
             ref={suggestionsRef}
-            className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto mt-2"
+            className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/50 max-h-80 overflow-y-auto mt-2"
           >
             {isLoadingSuggestions ? (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                 Loading suggestions...
               </div>
             ) : getAllSuggestions().length > 0 ? (
               <div className="py-2">
                 {suggestions.categories.length > 0 && (
                   <div className="px-4 py-2">
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                       Categories
                     </div>
                     {suggestions.categories.map((category, index) => (
                       <button
                         key={`category-${category}`}
-                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
-                          selectedSuggestionIndex === index ? 'bg-orange-50 text-orange-700' : 'text-gray-700'
-                        }`}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 rounded ${selectedSuggestionIndex === index ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400' : 'text-gray-700 dark:text-gray-300'
+                          }`}
                         onClick={() => selectSuggestion({ type: 'category', value: category })}
                       >
                         {category}
@@ -191,9 +190,8 @@ export default function SearchBar({ placeholder = "Search for proverbs, wisdom, 
                       return (
                         <button
                           key={`country-${country}`}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
-                            selectedSuggestionIndex === globalIndex ? 'bg-orange-50 text-orange-700' : 'text-gray-700'
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${selectedSuggestionIndex === globalIndex ? 'bg-orange-50 text-orange-700' : 'text-gray-700'
+                            }`}
                           onClick={() => selectSuggestion({ type: 'country', value: country })}
                         >
                           {country}
@@ -213,9 +211,8 @@ export default function SearchBar({ placeholder = "Search for proverbs, wisdom, 
                       return (
                         <button
                           key={`language-${language}`}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
-                            selectedSuggestionIndex === globalIndex ? 'bg-orange-50 text-orange-700' : 'text-gray-700'
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${selectedSuggestionIndex === globalIndex ? 'bg-orange-50 text-orange-700' : 'text-gray-700'
+                            }`}
                           onClick={() => selectSuggestion({ type: 'language', value: language })}
                         >
                           {language}
@@ -235,9 +232,8 @@ export default function SearchBar({ placeholder = "Search for proverbs, wisdom, 
                       return (
                         <button
                           key={`author-${author}`}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${
-                            selectedSuggestionIndex === globalIndex ? 'bg-orange-50 text-orange-700' : 'text-gray-700'
-                          }`}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${selectedSuggestionIndex === globalIndex ? 'bg-orange-50 text-orange-700' : 'text-gray-700'
+                            }`}
                           onClick={() => selectSuggestion({ type: 'author', value: author })}
                         >
                           {author}
@@ -248,7 +244,7 @@ export default function SearchBar({ placeholder = "Search for proverbs, wisdom, 
                 )}
               </div>
             ) : (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                 No suggestions found
               </div>
             )}

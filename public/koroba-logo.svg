@@ -1,0 +1,40 @@
+<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="80" cy="100" r="70" fill="#D97706" opacity="0.1"/>
+  
+  <!-- African Drum/Talking Drum Icon -->
+  <g transform="translate(80, 100)">
+    <!-- Drum body -->
+    <ellipse cx="0" cy="-25" rx="25" ry="8" fill="#D97706"/>
+    <rect x="-25" y="-25" width="50" height="50" fill="#B45309"/>
+    <ellipse cx="0" cy="25" rx="25" ry="8" fill="#92400E"/>
+    
+    <!-- Drum ropes -->
+    <path d="M -20,-20 L -25,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    <path d="M -10,-20 L -15,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    <path d="M 0,-20 L 0,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    <path d="M 10,-20 L 15,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    <path d="M 20,-20 L 25,20" stroke="#F59E0B" stroke-width="2" fill="none"/>
+    
+    <!-- Decorative pattern -->
+    <circle cx="0" cy="0" r="3" fill="#FDE68A"/>
+  </g>
+  
+  <!-- Main Text: Koroba -->
+  <text x="170" y="95" font-family="Arial, sans-serif" font-size="52" font-weight="bold" fill="#1F2937">
+    Koroba
+  </text>
+  
+  <!-- Subtext: Korobasayings -->
+  <text x="170" y="120" font-family="Arial, sans-serif" font-size="18" fill="#D97706" letter-spacing="1">
+    Korobasayings
+  </text>
+  
+  <!-- Decorative underline -->
+  <path d="M 170,125 L 340,125" stroke="#F59E0B" stroke-width="2" opacity="0.5"/>
+  
+  <!-- Small decorative elements (African symbols) -->
+  <circle cx="345" cy="95" r="4" fill="#D97706"/>
+  <circle cx="355" cy="95" r="4" fill="#F59E0B"/>
+  <circle cx="365" cy="95" r="4" fill="#FCD34D"/>
+</svg>

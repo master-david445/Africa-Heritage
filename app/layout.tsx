@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Montserrat, Playfair_Display } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/lib/auth-context"
+import { ThemeProvider } from "@/lib/theme-context"
 import { QueryProvider } from "@/lib/query-client"
 import ErrorBoundary from "@/components/error-boundary"
 import PWAInstall from "@/components/pwa-install"
@@ -22,12 +23,12 @@ const playfairDisplay = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: "African Heritage - Discover African Proverbs and Wisdom",
+  title: "Koroba - Discover African Proverbs and Wisdom",
   description: "Explore, share, and celebrate timeless African proverbs from across the continent. Join our community of wisdom seekers and cultural ambassadors.",
-  keywords: ["African proverbs", "wisdom", "culture", "tradition", "folklore", "Africa"],
-  authors: [{ name: "African Heritage Platform" }],
-  creator: "African Heritage Platform",
-  publisher: "African Heritage Platform",
+  keywords: ["African proverbs", "wisdom", "culture", "tradition", "folklore", "Africa", "Koroba"],
+  authors: [{ name: "Koroba" }],
+  creator: "Koroba",
+  publisher: "Koroba",
   formatDetection: {
     email: false,
     address: false,
@@ -38,18 +39,18 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: "African Heritage - Discover African Proverbs and Wisdom",
+    title: "Koroba - Discover African Proverbs and Wisdom",
     description: "Explore, share, and celebrate timeless African proverbs from across the continent.",
     url: '/',
-    siteName: 'African Heritage',
+    siteName: 'Koroba',
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: "African Heritage - Discover African Proverbs and Wisdom",
+    title: "Koroba - Discover African Proverbs and Wisdom",
     description: "Explore, share, and celebrate timeless African proverbs from across the continent.",
-    creator: '@africanheritage',
+    creator: '@korobasayings',
   },
   robots: {
     index: true,
@@ -63,14 +64,14 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'African Heritage',
+    title: 'Koroba',
   },
 }
 
@@ -105,15 +106,31 @@ export default function RootLayout({
 
   return (
     <html lang="en" className={`${montserrat.variable} ${playfairDisplay.variable}`} suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="font-sans antialiased bg-white dark:bg-gray-950">
         <ErrorBoundary level="app" name="RootLayout" enableSentry={true}>
           <QueryProvider>
-            <AuthProvider>
-              {children}
-              <MobileDebugInfo />
-              <PWAInstall />
-              <Toaster position="top-right" richColors />
-            </AuthProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                {children}
+                <MobileDebugInfo />
+                <PWAInstall />
+                <Toaster position="top-right" richColors />
+              </AuthProvider>
+            </ThemeProvider>
           </QueryProvider>
         </ErrorBoundary>
         <Analytics />

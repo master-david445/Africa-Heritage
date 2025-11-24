@@ -11,27 +11,14 @@ interface ShareButtonProps {
   className?: string
 }
 
-// Extend the Navigator interface to include the share method
-type ShareData = {
-  title?: string
-  text?: string
-  url: string
-}
-
-interface NavigatorWithShare extends Navigator {
-  share?: (data: ShareData) => Promise<void>
-}
-
 export function ShareButton({ id, content, className }: ShareButtonProps) {
   const handleShare = async () => {
     const slug = generateSlug(content)
     const url = `${window.location.origin}/proverbs/${id}/${slug}`
-    
-    const nav = navigator as NavigatorWithShare
-    
-    if (nav.share) {
+
+    if ('share' in navigator && typeof navigator.share === 'function') {
       try {
-        await nav.share({
+        await navigator.share({
           title: 'African Proverb',
           text: content,
           url,

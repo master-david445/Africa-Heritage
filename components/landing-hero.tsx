@@ -90,16 +90,15 @@ export default function LandingHero() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Logo */}
         <div
-          className={`mb-8 transition-all duration-1000 ${
-            isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
-          }`}
+          className={`mb-8 transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
+            }`}
         >
           <Link href="/" className="inline-flex items-center gap-3 hover:opacity-80 transition">
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center font-bold text-terracotta-orange shadow-lg">
               AH
             </div>
             <span className="font-serif text-2xl font-bold text-white hidden sm:inline text-shadow-heritage">
-              African Heritage
+              Koroba
             </span>
           </Link>
         </div>
@@ -107,33 +106,30 @@ export default function LandingHero() {
         {/* Main Headline */}
         <h1
           id="hero-heading"
-          className={`text-display-1 text-white mb-6 text-shadow-heritage transition-all duration-1000 delay-200 ${
-            isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
-          }`}
+          className={`text-display-1 text-white mb-6 text-shadow-heritage transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
+            }`}
         >
           Discover the Wisdom of Africa
         </h1>
 
         {/* Subheadline */}
         <p
-          className={`text-display-2 text-light-beige mb-12 max-w-3xl mx-auto text-shadow-heritage transition-all duration-1000 delay-400 ${
-            isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
-          }`}
+          className={`text-display-2 text-light-beige mb-12 max-w-3xl mx-auto text-shadow-heritage transition-all duration-1000 delay-400 ${isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
+            }`}
         >
           Ancient Proverbs, Modern Voices
         </p>
 
         {/* CTA Buttons */}
         <div
-          className={`flex flex-col sm:flex-row gap-6 justify-center items-center transition-all duration-1000 delay-600 ${
-            isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
-          }`}
+          className={`flex flex-col sm:flex-row gap-6 justify-center items-center transition-all duration-1000 delay-600 ${isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
+            }`}
         >
           <Link href="/auth/sign-up">
             <Button
               size="lg"
               className="bg-gold-accent hover:bg-gold-accent/90 text-black font-semibold px-8 py-4 text-lg shadow-lg border-heritage group"
-              aria-label="Join the African Heritage community"
+              aria-label="Join the Koroba community"
             >
               <Users className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
               Join Community
@@ -156,9 +152,8 @@ export default function LandingHero() {
 
       {/* Scroll Indicator */}
       <div
-        className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-1000 delay-800 ${
-          isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
-        }`}
+        className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 transition-all duration-1000 delay-800 ${isVisible ? 'animate-fade-in-up' : 'opacity-0 translate-y-8'
+          }`}
       >
         <button
           onClick={scrollToContent}

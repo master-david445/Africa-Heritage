@@ -1,0 +1,18 @@
+<svg viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main Text: Koroba -->
+  <text x="10" y="55" font-family="Arial, sans-serif" font-size="52" font-weight="bold" fill="#1F2937">
+    Koroba
+  </text>
+  
+  <!-- Subtext: Korobasayings -->
+  <text x="10" y="80" font-family="Arial, sans-serif" font-size="18" fill="#D97706" letter-spacing="1">
+    Korobasayings
+  </text>
+  
+  <!-- Decorative underline -->
+  <path d="M 10,85 L 280,85" stroke="#F59E0B" stroke-width="2" opacity="0.5"/>
+  
+  <!-- Small decorative elements -->
+  <circle cx="285" cy="55" r="4" fill="#D97706"/>
+  <circle cx="295" cy="55" r="4" fill="#F59E0B"/>
+</svg>

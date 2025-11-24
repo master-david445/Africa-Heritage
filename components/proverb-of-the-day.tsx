@@ -34,7 +34,7 @@ export function ProverbOfTheDay() {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-lg border-2 border-amber-200 p-8 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:bg-none dark:bg-card rounded-xl shadow-lg dark:shadow-2xl dark:shadow-black/50 border-2 border-amber-200 dark:border-border p-8 relative overflow-hidden">
         {/* Decorative background pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-4 right-4 w-20 h-20 border-4 border-amber-300 rounded-full"></div>
@@ -65,8 +65,8 @@ export function ProverbOfTheDay() {
 
   if (error || !proverb) {
     return (
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-lg border-2 border-amber-200 p-8 text-center">
-        <p className="text-amber-700 text-lg">{error || "No proverb available today"}</p>
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:bg-none dark:bg-card rounded-xl shadow-lg dark:shadow-2xl dark:shadow-black/50 border-2 border-amber-200 dark:border-border p-8 text-center">
+        <p className="text-amber-700 dark:text-amber-400 text-lg">{error || "No proverb available today"}</p>
       </div>
     )
   }
@@ -74,7 +74,7 @@ export function ProverbOfTheDay() {
   const author = proverb.profiles
 
   return (
-    <article className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl shadow-lg border-2 border-amber-200 p-8 relative overflow-hidden" role="article" aria-label="Proverb of the day">
+    <article className="bg-gradient-to-br from-amber-50 to-orange-50 dark:bg-none dark:bg-card rounded-xl shadow-lg dark:shadow-2xl dark:shadow-black/50 border-2 border-amber-200 dark:border-border p-8 relative overflow-hidden" role="article" aria-label="Proverb of the day">
       {/* Decorative background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-4 right-4 w-20 h-20 border-4 border-amber-300 rounded-full"></div>
@@ -96,8 +96,8 @@ export function ProverbOfTheDay() {
             {author?.username?.substring(0, 2).toUpperCase() || "U"}
           </div>
           <div>
-            <div className="font-bold text-gray-900 text-lg">{author?.username || "Anonymous"}</div>
-            <div className="text-sm text-gray-600" aria-label={`From ${proverb.country} in ${proverb.language}`}>
+            <div className="font-bold text-card-foreground text-lg">{author?.username || "Anonymous"}</div>
+            <div className="text-sm text-muted-foreground" aria-label={`From ${proverb.country} in ${proverb.language}`}>
               {proverb.country} • {proverb.language}
             </div>
           </div>
@@ -105,14 +105,14 @@ export function ProverbOfTheDay() {
 
         {/* Proverb Content - Larger text */}
         <div className="mb-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">What does this proverb mean?</h3>
+          <h3 className="text-xl font-bold text-card-foreground mb-4">What does this proverb mean?</h3>
           <div className="text-lg leading-relaxed">
             <ProverbContent proverb={proverb} />
           </div>
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-sm text-gray-600 border-t border-amber-200 pt-4">
+        <div className="flex items-center justify-between text-sm text-muted-foreground border-t border-amber-200 dark:border-border pt-4">
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1">
               <span className="font-medium">{proverb.likes_count || 0}</span> likes

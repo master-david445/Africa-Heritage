@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, X, LogOut, User } from "lucide-react"
+import { Menu, X, LogOut, User, Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
+import { useTheme } from "@/lib/theme-context"
 import Link from "next/link"
+import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import NotificationBell from "@/components/notification-bell"
@@ -13,6 +15,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [headerError, setHeaderError] = useState<string | null>(null)
   const { user, profile, isLoading, refreshProfile } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const router = useRouter()
 
   useEffect(() => {
@@ -37,15 +40,27 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 gradient-african text-white shadow-lg">
+      <header className="sticky top-0 z-50 gradient-african dark:bg-none dark:bg-card text-white shadow-lg dark:shadow-black/50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center font-bold text-orange-600">
-                AH
-              </div>
-              <span className="font-serif text-xl font-bold hidden sm:inline">African Heritage</span>
+            <Link href="/" className="flex items-center gap-4 hover:opacity-80 transition">
+              <Image
+                src="/koroba-drum.svg"
+                alt="Koroba Drum"
+                width={50}
+                height={50}
+                className="h-12 w-12"
+                priority
+              />
+              <Image
+                src="/koroba-text.svg"
+                alt="Koroba"
+                width={180}
+                height={60}
+                className="h-12 w-auto hidden sm:block"
+                priority
+              />
             </Link>
 
             {/* Desktop Navigation */}
@@ -91,38 +106,49 @@ export default function Header() {
               ) : user && profile ? (
                 <div className="flex items-center gap-3">
                   <NotificationBell />
-                   <span className="hidden sm:inline text-sm">{profile.username}</span>
-                   <button
-                     onClick={refreshProfile}
-                     className="text-white hover:bg-white/20 px-2 py-1 rounded text-xs"
-                     title="Refresh Profile"
-                   >
-                     ↻
-                   </button>
-                   <Link href={`/profile/${user.id}`}>
-                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                       <User className="w-4 h-4" />
-                     </Button>
-                   </Link>
-                   <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleLogout}>
-                     <LogOut className="w-4 h-4" />
-                   </Button>
-                 </div>
-               ) : (
-                 /* Show login/signup buttons when not loading and no user */
-                 <div className="hidden sm:flex gap-2">
-                   <Link href="/auth/login">
-                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                       Login
-                     </Button>
-                   </Link>
-                   <Link href="/auth/sign-up">
-                     <Button size="sm" className="bg-white text-orange-600 hover:bg-gray-100">
-                       Sign Up
-                     </Button>
-                   </Link>
-                 </div>
-               )}
+                  <span className="hidden sm:inline text-sm">{profile.username}</span>
+                  <button
+                    onClick={refreshProfile}
+                    className="text-white hover:bg-white/20 px-2 py-1 rounded text-xs"
+                    title="Refresh Profile"
+                  >
+                    ↻
+                  </button>
+                  <Link href={`/profile/${user.id}`}>
+                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                      <User className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="sm" className="text-white hover:bg-white/20" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                /* Show login/signup buttons when not loading and no user */
+                <div className="hidden sm:flex gap-2">
+                  <Link href="/auth/login">
+                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href="/auth/sign-up">
+                    <Button size="sm" className="bg-white text-orange-600 hover:bg-gray-100">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {/* Dark Mode Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="text-white hover:bg-white/20"
+                title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+              >
+                {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              </Button>
 
               {/* Mobile Menu Button - Always visible on mobile */}
               <button className="md:hidden text-white p-1" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>

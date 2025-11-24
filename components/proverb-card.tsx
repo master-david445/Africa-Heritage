@@ -110,15 +110,15 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
   }
 
   return (
-    <article className="bg-white rounded-lg shadow-md border-l-4 border-orange-600 p-6 hover:shadow-lg transition" role="article" aria-label="Proverb card">
+    <article className="bg-card text-card-foreground rounded-lg shadow-lg dark:shadow-2xl dark:shadow-black/50 border border-border border-l-4 border-l-orange-600 dark:border-l-orange-500 p-6 hover:shadow-xl dark:hover:shadow-2xl transition" role="article" aria-label="Proverb card">
       {/* Header */}
       <header className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-400 flex items-center justify-center text-white font-bold text-sm" aria-hidden="true">
           {author?.username?.substring(0, 2).toUpperCase() || "U"}
         </div>
         <div>
-          <div className="font-semibold text-gray-900">{author?.username || "Anonymous"}</div>
-          <div className="text-xs text-gray-500" aria-label={`From ${proverb.country} in ${proverb.language}`}>
+          <div className="font-semibold text-card-foreground">{author?.username || "Anonymous"}</div>
+          <div className="text-xs text-muted-foreground" aria-label={`From ${proverb.country} in ${proverb.language}`}>
             {proverb.country} • {proverb.language}
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
 
       {/* Comments Section */}
       {showComments && (
-        <div className="mb-6 border-t pt-4">
+        <div className="mb-6 border-t border-border pt-4">
           <CommentSection
             proverbId={proverb.id}
             comments={comments}
@@ -163,8 +163,8 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
       )}
 
       {/* Q&A Section (Answers) */}
-      <div className="border-t pt-4">
-        <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
+      <div className="border-t border-border pt-4">
+        <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-4">
             <span>{proverb.answer_count || 0} answers</span>
             <span>{proverb.views || 0} views</span>
@@ -174,15 +174,15 @@ export default function ProverbCard({ proverb, currentUser }: ProverbCardProps) 
               onClick={handleFollowQuestion}
               disabled={isFollowLoading}
               className={`text-sm font-medium px-3 py-1 rounded-full transition ${isFollowingQuestionState
-                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  : "bg-orange-50 text-orange-600 hover:bg-orange-100"
+                ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                : "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30"
                 }`}
             >
               {isFollowLoading ? "..." : isFollowingQuestionState ? "Following" : "Follow Question"}
             </button>
             <button
               onClick={handleToggleAnswers}
-              className="text-orange-600 hover:text-orange-700 font-medium"
+              className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 font-medium"
             >
               {showAnswers ? "Hide answers" : "Show answers"}
             </button>

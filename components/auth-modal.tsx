@@ -45,7 +45,7 @@ export default function AuthModal({ open, onOpenChange, mode }: AuthModalProps) 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl">
-            {isSignup ? "Join African Heritage" : "Welcome Back"}
+            {isSignup ? "Join Koroba" : "Welcome Back"}
           </DialogTitle>
         </DialogHeader>
 

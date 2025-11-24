@@ -101,7 +101,7 @@ export default function SignUpPage() {
         <div className="flex flex-col gap-6">
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
-              <CardTitle className="text-2xl">Join African Heritage</CardTitle>
+              <CardTitle className="text-2xl">Join Koroba</CardTitle>
               <CardDescription className="text-orange-50">Create your account to share proverbs</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">

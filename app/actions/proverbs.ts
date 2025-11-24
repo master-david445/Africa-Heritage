@@ -1,15 +1,12 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 import { createProverbSchema, CreateProverbInput } from "@/lib/validations"
 import { checkAndAwardBadges } from "@/app/actions/badges"
-import type { Proverb } from "@/lib/types"
+import { awardPoints } from "@/app/actions/points"
 
-export async function createProverb(formData: CreateProverbInput) {
+export async function createProverb(validatedData: CreateProverbInput) {
   const supabase = await createClient()
-
-  // Validate input
-  const validatedData = createProverbSchema.parse(formData)
 
   const {
     data: { user },
@@ -19,32 +16,23 @@ export async function createProverb(formData: CreateProverbInput) {
     throw new Error("Unauthorized")
   }
 
-  // Check if user profile exists, create if not
-  const { data: profile } = await supabase
+  // Create profile if it doesn't exist
+  const { error: profileError } = await supabase
     .from("profiles")
-    .select("id")
-    .eq("id", user.id)
-    .single()
+    .insert({
+      id: user.id,
+      username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
+      email: user.email || '',
+      points: 0,
+      reputation_score: 0,
+      is_admin: false,
+      is_verified: false,
+      is_suspended: false,
+    })
 
-  if (!profile) {
-    // Create profile if it doesn't exist
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: user.id,
-        username: user.email?.split('@')[0] || `user_${user.id.slice(0, 8)}`,
-        email: user.email || '',
-        points: 0,
-        reputation_score: 0,
-        is_admin: false,
-        is_verified: false,
-        is_suspended: false,
-      })
-
-    if (profileError) {
-      console.error("Profile creation error:", profileError)
-      // Continue anyway, as the insert might still work
-    }
+  if (profileError) {
+    console.error("Profile creation error:", profileError)
+    // Continue anyway, as the insert might still work
   }
 
   const { data, error } = await supabase
@@ -73,6 +61,11 @@ export async function createProverb(formData: CreateProverbInput) {
     console.error("Error awarding badges:", err)
   )
 
+  // Award points asynchronously
+  awardPoints(user.id, 10, 'created_proverb').catch(err =>
+    console.error("Error awarding points:", err)
+  )
+
   return data
 }
 
@@ -84,13 +77,19 @@ export async function getProverbsByUser(userId: string) {
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-
   if (error) throw error
   return data
 }
 
 export async function getAllProverbs(limit = 20, offset = 0) {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for public feed
+  let supabase;
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    supabase = await createAdminClient()
+  } else {
+    console.warn('[getAllProverbs] SUPABASE_SERVICE_ROLE_KEY missing, falling back to anon client')
+    supabase = await createClient()
+  }
 
   try {
     console.log(`[getAllProverbs] Fetching proverbs with limit=${limit}, offset=${offset}`)
@@ -100,16 +99,13 @@ export async function getAllProverbs(limit = 20, offset = 0) {
       .from("proverbs")
       .select(`
         *,
-        profiles:user_id(id, username, avatar_url)
+        profiles: user_id(id, username, avatar_url, country)
       `)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (error) {
       console.error('[getAllProverbs] Supabase error:', error)
-      if (error.code === '42501') {
-        console.error('[getAllProverbs] RLS Policy Violation. Check if you have proper SELECT policies on the proverbs table.')
-      }
       throw error
     }
 
@@ -176,7 +172,6 @@ export async function getAllProverbs(limit = 20, offset = 0) {
 
   } catch (error) {
     console.error('[getAllProverbs] Error:', error)
-    // Return empty array instead of throwing to prevent UI crash
     return []
   }
 }
@@ -228,8 +223,10 @@ export async function deleteProverb(proverbId: string) {
   if (error) throw error
 }
 
-export async function getProverbOfTheDay(): Promise<Proverb> {
+export async function getProverbOfTheDay() {
   const supabase = await createClient()
+  const today = new Date().toISOString().split('T')[0]
+  let currentIndex = 0
 
   // Optimized: Get count and proverb in parallel, handle tracker separately
   const [countResult, trackerResult] = await Promise.all([
@@ -247,31 +244,24 @@ export async function getProverbOfTheDay(): Promise<Proverb> {
     // Create initial tracker if doesn't exist
     const { data: newTracker, error: insertError } = await supabase
       .from("proverb_of_the_day_tracker")
-      .insert({ current_index: 0, last_reset_date: new Date().toISOString().split('T')[0] })
+      .insert({ current_index: 0, last_reset_date: today })
       .select()
       .single()
 
-    if (insertError) {
-      console.error("Failed to create tracker:", insertError)
-      throw new Error(`Failed to create tracker: ${insertError.message}`)
-    }
+    if (insertError) console.warn('Tracker creation failed', insertError)
     tracker = newTracker
-  }
-
-  // Check if date has changed
-  const today = new Date().toISOString().split('T')[0]
-  const lastResetDate = new Date(tracker.last_reset_date).toISOString().split('T')[0]
-
-  let currentIndex = tracker.current_index
-
-  if (today !== lastResetDate) {
-    // New day - increment index
-    currentIndex = (tracker.current_index + 1) % totalProverbs
-    needsUpdate = true
+    currentIndex = 0
+    needsUpdate = false
+  } else {
+    currentIndex = tracker.current_index
+    if (tracker.last_reset_date !== today) {
+      currentIndex = (currentIndex + 1) % totalProverbs
+      needsUpdate = true
+    }
   }
 
   // Update tracker asynchronously if needed (don't block proverb fetch)
-  if (needsUpdate) {
+  if (needsUpdate && tracker) {
     supabase
       .from("proverb_of_the_day_tracker")
       .update({
@@ -289,39 +279,38 @@ export async function getProverbOfTheDay(): Promise<Proverb> {
   }
 
   // Fetch proverb with optimized single query including counts
-  let { data: proverb, error: proverbError } = await supabase
+  const { data: proverb, error: proverbError } = await supabase
     .from("proverbs")
     .select(`
       *,
-      profiles:user_id(id, username, avatar_url, country)
+      profiles: user_id(id, username, avatar_url, country)
     `)
-    .order("created_at", { ascending: true })
     .range(currentIndex, currentIndex)
     .single()
 
-  // Fallback: If specific index fails (e.g. deletion), try getting the first proverb
   if (proverbError || !proverb) {
-    console.warn("Proverb at index failed, falling back to first proverb", proverbError)
-    const { data: fallbackProverb, error: fallbackError } = await supabase
+    // Fallback
+    const { data: fallbackProverb } = await supabase
       .from("proverbs")
       .select(`
-        *,
-        profiles:user_id(id, username, avatar_url, country)
+            *,
+            profiles: user_id(id, username, avatar_url, country)
         `)
-      .order("created_at", { ascending: true })
       .limit(1)
       .single()
 
-    if (fallbackError || !fallbackProverb) {
-      throw new Error("Failed to fetch any proverb")
+    if (!fallbackProverb) throw new Error("No proverbs found")
+    return {
+      ...fallbackProverb,
+      likes_count: 0,
+      comments_count: 0
     }
-    proverb = fallbackProverb
   }
 
-  // Get counts efficiently
+  // Fetch counts for the proverb
   const [likesResult, commentsResult] = await Promise.all([
-    supabase.from("likes").select("proverb_id", { count: "exact" }).eq("proverb_id", proverb.id),
-    supabase.from("comments").select("proverb_id", { count: "exact" }).eq("proverb_id", proverb.id),
+    supabase.from("likes").select("proverb_id", { count: "exact", head: true }).eq("proverb_id", proverb.id),
+    supabase.from("comments").select("proverb_id", { count: "exact", head: true }).eq("proverb_id", proverb.id),
   ])
 
   return {

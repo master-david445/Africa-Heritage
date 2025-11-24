@@ -7,8 +7,8 @@ type Props = {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const supabase = createClient()
-  
+  const supabase = await createClient()
+
   // Fetch the proverb data
   const { data: proverb } = await supabase
     .from('questions')
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url,
-      siteName: 'African Heritage',
+      siteName: 'Koroba',
       type: 'article',
       locale: 'en_US',
     },

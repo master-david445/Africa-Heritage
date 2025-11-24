@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { Badge, UserBadge } from "@/lib/types"
+import { awardPoints } from "@/app/actions/points"
 
 export async function getUserBadges(userId: string) {
     const supabase = await createClient()
@@ -100,6 +101,11 @@ export async function checkAndAwardBadges(userId: string) {
                     is_read: false,
                     data: { badge_id: badge.id }
                 })
+
+                // Award points asynchronously
+                awardPoints(userId, 50, 'badge_earned').catch(err =>
+                    console.error("Error awarding points for badge:", err)
+                )
             }
         }
     }

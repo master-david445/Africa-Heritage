@@ -65,7 +65,7 @@ export default function UserProfileCard({ user, userId, isOwnProfile = false, on
 
   if (loading || !displayUser) {
     return (
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-card text-card-foreground rounded-lg shadow-md overflow-hidden">
         <div className="h-32 bg-gradient-to-r from-orange-400 to-red-400 animate-pulse"></div>
         <div className="px-6 pb-6">
           <div className="flex items-end gap-4 -mt-16 mb-4">
@@ -81,7 +81,7 @@ export default function UserProfileCard({ user, userId, isOwnProfile = false, on
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-card text-card-foreground rounded-lg shadow-md overflow-hidden">
       {/* Cover Image */}
       <div className="h-24 sm:h-32 bg-gradient-to-r from-orange-400 to-red-400"></div>
 
@@ -96,16 +96,16 @@ export default function UserProfileCard({ user, userId, isOwnProfile = false, on
 
         {/* User Info */}
         <div className="mb-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{displayUser.username}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-card-foreground">{displayUser.username}</h1>
           {displayUser.is_verified && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded ml-2">Verified</span>}
           {displayUser.is_admin && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded ml-2">Admin</span>}
         </div>
 
         {/* Bio */}
-        {displayUser.bio && <p className="text-gray-600 mb-4">{displayUser.bio}</p>}
+        {displayUser.bio && <p className="text-muted-foreground mb-4">{displayUser.bio}</p>}
 
         {/* Location & Join Date */}
-        <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-600">
+        <div className="flex flex-wrap gap-4 mb-4 text-sm text-muted-foreground">
           {displayUser.country && (
             <div className="flex items-center gap-1">
               <MapPin className="w-4 h-4" />
@@ -119,18 +119,18 @@ export default function UserProfileCard({ user, userId, isOwnProfile = false, on
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 md:gap-4 py-4 border-t border-b border-gray-200 mb-4">
+        <div className="grid grid-cols-3 gap-2 md:gap-4 py-4 border-t border-b border-border mb-4">
           <div className="text-center">
-            <div className="text-lg font-bold text-gray-900">{displayUser.proverbsCount}</div>
-            <div className="text-xs text-gray-500">Proverbs</div>
+            <div className="text-lg font-bold text-card-foreground">{displayUser.proverbsCount}</div>
+            <div className="text-xs text-muted-foreground">Proverbs</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-gray-900">{displayUser.followersCount}</div>
-            <div className="text-xs text-gray-500">Followers</div>
+            <div className="text-lg font-bold text-card-foreground">{displayUser.followersCount}</div>
+            <div className="text-xs text-muted-foreground">Followers</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-gray-900">{displayUser.followingCount}</div>
-            <div className="text-xs text-gray-500">Following</div>
+            <div className="text-lg font-bold text-card-foreground">{displayUser.followingCount}</div>
+            <div className="text-xs text-muted-foreground">Following</div>
           </div>
         </div>
 
@@ -138,10 +138,7 @@ export default function UserProfileCard({ user, userId, isOwnProfile = false, on
         {!isOwnProfile && (
           <div className="mb-4">
             <FollowButton
-              targetId={displayUser.id}
-              targetType="user"
-              isFollowing={isUserFollowing}
-              onFollowChange={setIsUserFollowing}
+              userId={displayUser.id}
             />
           </div>
         )}
@@ -151,7 +148,7 @@ export default function UserProfileCard({ user, userId, isOwnProfile = false, on
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Award className="w-4 h-4 text-orange-600" />
-              <span className="font-semibold text-gray-900">Reputation</span>
+              <span className="font-semibold text-orange-900 dark:text-orange-900">Reputation</span>
             </div>
             <span className="text-lg font-bold text-orange-600">{displayUser.reputation_score}</span>
           </div>

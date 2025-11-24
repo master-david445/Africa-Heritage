@@ -87,7 +87,7 @@ export default function ProfilePage() {
           <div className="animate-pulse">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-1">
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="bg-card rounded-lg shadow-md overflow-hidden">
                   <div className="h-32 bg-gray-200"></div>
                   <div className="px-6 pb-6">
                     <div className="flex items-end gap-4 -mt-16 mb-4">
@@ -101,7 +101,7 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="lg:col-span-2">
-                <div className="h-96 bg-white rounded-lg shadow-md"></div>
+                <div className="h-96 bg-card rounded-lg shadow-md"></div>
               </div>
             </div>
           </div>
@@ -213,7 +213,7 @@ export default function ProfilePage() {
                     onClick={() => setActiveTab("settings")}
                     className={`px-3 py-2 text-sm md:text-base font-semibold transition whitespace-nowrap flex-shrink-0 ${activeTab === "settings"
                       ? "text-orange-600 border-b-2 border-orange-600"
-                      : "text-gray-600 hover:text-gray-900"
+                      : "text-muted-foreground hover:text-foreground"
                       }`}
                   >
                     Settings
@@ -225,8 +225,8 @@ export default function ProfilePage() {
               {activeTab === "proverbs" && (
                 <div className="space-y-4">
                   {userProverbs.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                      <p className="text-gray-500">
+                    <div className="bg-card rounded-lg shadow-md p-8 text-center">
+                      <p className="text-muted-foreground">
                         {isOwnProfile ? "You haven't shared any proverbs yet" : "No proverbs shared yet"}
                       </p>
                       {isOwnProfile && (
