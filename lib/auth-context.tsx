@@ -175,7 +175,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user || null)
 
         if (session?.user) {
-          await fetchProfile(session.user.id)
+          fetchProfile(session.user.id).catch(profileError => {
+            console.error('Profile fetch error in auth state change:', profileError)
+          })
         } else {
           setProfile(null)
         }
