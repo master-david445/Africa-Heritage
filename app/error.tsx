@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 
 export default function Error({
   error,
@@ -32,11 +33,11 @@ export default function Error({
             />
           </svg>
         </div>
-        
+
         <h2 className="text-2xl font-bold text-gray-900">
           Something went wrong!
         </h2>
-        
+
         <p className="text-gray-600">
           {error.message || 'An unexpected error occurred. Please try again.'}
         </p>
@@ -48,12 +49,12 @@ export default function Error({
           >
             Try again
           </button>
-          <a
+          <Link
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
           >
             Go to home
-          </a>
+          </Link>
         </div>
 
         <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-left">

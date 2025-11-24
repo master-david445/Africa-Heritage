@@ -19,7 +19,7 @@ function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout
+  let timeout: ReturnType<typeof setTimeout>
   return (...args: Parameters<T>) => {
     clearTimeout(timeout)
     timeout = setTimeout(() => func(...args), wait)
@@ -81,10 +81,6 @@ export default function SearchPage() {
         offset: 0,
       })
       setResults(searchResults)
-      setHasSearched(true)
-    } catch (error) {
-      console.error("[v0] Search error:", error)
-      setResults([])
       setHasSearched(true)
     } finally {
       setIsLoading(false)
@@ -153,6 +149,7 @@ export default function SearchPage() {
   }
 
   // Debounced fetch suggestions
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedFetchSuggestions = useCallback(
     debounce((searchQuery: string) => {
       fetchSuggestions(searchQuery)
@@ -239,14 +236,14 @@ export default function SearchPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Header />
       {/* Search Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4 mb-4">
-            <Search className="w-6 h-6 text-gray-400" />
-            <h1 className="text-2xl font-bold text-gray-900">Search Proverbs</h1>
+            <Search className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Search Proverbs</h1>
           </div>
 
           {/* Search Form */}
@@ -263,30 +260,30 @@ export default function SearchPage() {
                 value={query}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                className="w-full"
+                className="w-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-orange-500 dark:focus:ring-orange-400"
               />
 
               {/* Suggestions Dropdown */}
               {showSuggestions && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-md shadow-lg max-h-80 overflow-y-auto mt-1"
+                  className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md shadow-lg dark:shadow-2xl dark:shadow-black/50 max-h-80 overflow-y-auto mt-1"
                 >
                   {isLoadingSuggestions ? (
-                    <div className="p-4 text-center text-gray-500">
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                       Loading suggestions...
                     </div>
                   ) : getAllSuggestions().length > 0 ? (
                     <div className="py-2">
                       {suggestions.categories.length > 0 && (
                         <div className="px-4 py-2">
-                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                             Categories
                           </div>
                           {suggestions.categories.map((category, index) => (
                             <button
                               key={`category-${category}`}
-                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded ${selectedSuggestionIndex === index ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 rounded ${selectedSuggestionIndex === index ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400' : 'text-gray-700 dark:text-gray-300'
                                 }`}
                               onClick={() => selectSuggestion({ type: 'category', value: category })}
                             >
@@ -360,7 +357,7 @@ export default function SearchPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="p-4 text-center text-gray-500">
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                       No suggestions found
                     </div>
                   )}
@@ -384,33 +381,36 @@ export default function SearchPage() {
 
           {/* Filters Panel */}
           {showFilters && (
-            <div id="search-filters" className="mt-4 p-4 bg-gray-50 rounded-lg border">
+            <div id="search-filters" className="mt-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="country-filter">Country</Label>
+                  <Label htmlFor="country-filter" className="text-gray-700 dark:text-gray-300">Country</Label>
                   <Input
                     id="country-filter"
                     placeholder="e.g., Nigeria, Ghana"
                     value={filters.country || ""}
                     onChange={(e) => handleFilterChange("country", e.target.value)}
+                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="language-filter">Language</Label>
+                  <Label htmlFor="language-filter" className="text-gray-700 dark:text-gray-300">Language</Label>
                   <Input
                     id="language-filter"
                     placeholder="e.g., Yoruba, Swahili"
                     value={filters.language || ""}
                     onChange={(e) => handleFilterChange("language", e.target.value)}
+                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="categories-filter">Categories</Label>
+                  <Label htmlFor="categories-filter" className="text-gray-700 dark:text-gray-300">Categories</Label>
                   <Input
                     id="categories-filter"
                     placeholder="e.g., wisdom, family (comma-separated)"
                     value={filters.categories?.join(", ") || ""}
                     onChange={(e) => handleFilterChange("categories", e.target.value.split(",").map(s => s.trim()))}
+                    className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -439,11 +439,11 @@ export default function SearchPage() {
         ) : hasSearched ? (
           <div>
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Search Results {results.length > 0 && `(${results.length})`}
               </h2>
               {query && (
-                <p className="text-gray-600 mt-1">
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
                   Showing results for {query}
                 </p>
               )}
@@ -457,9 +457,9 @@ export default function SearchPage() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No proverbs found</h3>
-                <p className="text-gray-600 mb-4">
+                <Search className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No proverbs found</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Try adjusting your search terms or filters
                 </p>
                 <Button onClick={clearFilters} variant="outline">
@@ -470,9 +470,9 @@ export default function SearchPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Search African Proverbs</h3>
-            <p className="text-gray-600">
+            <Search className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Search African Proverbs</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               Enter keywords, countries, or categories to find wisdom from African heritage
             </p>
           </div>

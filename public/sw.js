@@ -1,4 +1,4 @@
-// Service Worker for African Heritage PWA
+// Service Worker for Koroba PWA
 const CACHE_NAME = 'african-heritage-v1';
 const STATIC_CACHE = 'african-heritage-static-v1';
 const DYNAMIC_CACHE = 'african-heritage-dynamic-v1';

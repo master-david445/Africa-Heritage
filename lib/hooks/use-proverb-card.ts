@@ -168,7 +168,7 @@ export function useProverbCard(proverb: Proverb, currentUser: Profile | null) {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: "African Heritage Proverb",
+          title: "Koroba Proverb",
           text: proverb.proverb,
           url: window.location.href,
         })

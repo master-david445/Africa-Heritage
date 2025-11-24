@@ -37,7 +37,7 @@ export default function ExplorePage() {
   const hasFetchedRef = useRef(false)
 
   const fetchProverbs = useCallback(async () => {
-    if (loading) return
+    // if (loading) return - Removing this as it prevents initial fetch when loading is true by default
 
     setLoading(true)
     setError(null)
@@ -54,23 +54,24 @@ export default function ExplorePage() {
     })
 
     setLoading(false)
-  }, [loading])
+  }, [])
+
+  useEffect(() => {
+    fetchProverbs()
+  }, [fetchProverbs])
 
 
-  // Show loading state while checking authentication
-  if (authLoading) {
+  // Show loading state only if we have no data and are loading
+  if (loading && proverbs.length === 0) {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-gray-50">
+        <main className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-950 dark:to-gray-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Explore African Wisdom</h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Checking authentication...
-              </p>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Explore African Wisdom</h1>
               <div className="mt-8 flex justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 dark:border-orange-500"></div>
               </div>
             </div>
           </div>
@@ -79,20 +80,15 @@ export default function ExplorePage() {
     )
   }
 
-  // If not authenticated, don't render the page content
-  if (!user) {
-    return null
-  }
-
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-950 dark:to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Section */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Explore African Wisdom</h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Explore African Wisdom</h1>
+            <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
               Discover timeless proverbs from across Africa, passed down through generations of wisdom keepers.
             </p>
           </div>
@@ -113,11 +109,11 @@ export default function ExplorePage() {
 
           {/* All Proverbs Feed */}
           <section aria-labelledby="all-proverbs-heading">
-            <h2 id="all-proverbs-heading" className="text-2xl font-bold text-gray-900 mb-8">All Proverbs</h2>
+            <h2 id="all-proverbs-heading" className="text-2xl font-bold text-gray-900 dark:text-white mb-8">All Proverbs</h2>
             {loading ? (
               <div className="space-y-6">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg shadow-md p-6">
+                  <div key={i} className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse" />
                       <div>
@@ -168,7 +164,7 @@ export default function ExplorePage() {
 
           {/* Category Cards */}
           <section className="mt-16" aria-labelledby="categories-heading">
-            <h2 id="categories-heading" className="text-2xl font-bold text-gray-900 mb-8 text-center">Explore by Category</h2>
+            <h2 id="categories-heading" className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">Explore by Category</h2>
             <CategoryCards />
           </section>
         </div>

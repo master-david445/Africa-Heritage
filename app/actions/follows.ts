@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { awardPoints } from "@/app/actions/points"
 
 export async function toggleFollow(followingId: string) {
   const supabase = await createClient()
@@ -26,6 +27,12 @@ export async function toggleFollow(followingId: string) {
     const { error } = await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", followingId)
 
     if (error) throw error
+
+    // Deduct points asynchronously
+    awardPoints(followingId, -5, 'lost_follower').catch(err =>
+      console.error("Error deducting points:", err)
+    )
+
     return { following: false }
   } else {
     // Follow
@@ -35,6 +42,12 @@ export async function toggleFollow(followingId: string) {
     })
 
     if (error) throw error
+
+    // Award points asynchronously
+    awardPoints(followingId, 5, 'new_follower').catch(err =>
+      console.error("Error awarding points:", err)
+    )
+
     return { following: true }
   }
 }

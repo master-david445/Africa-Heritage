@@ -59,7 +59,7 @@ export function CategoryCards() {
             <button
               key={category.name}
               onClick={() => handleCategoryClick(category.name)}
-              className={`group relative bg-gradient-to-br ${category.gradient} rounded-xl p-6 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-gray-100`}
+              className={`group relative bg-gradient-to-br ${category.gradient} dark:opacity-90 rounded-xl p-6 text-white shadow-lg dark:shadow-2xl dark:shadow-black/50 hover:shadow-xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-900`}
               aria-label={`Explore ${category.name} proverbs`}
             >
               {/* Background pattern */}

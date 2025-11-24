@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import ProverbCard from "@/components/proverb-card"
 import ProverbCardSkeleton from "@/components/proverb-card-skeleton"
 import SocialStats from "@/components/social-stats"
@@ -21,6 +21,10 @@ export default function ProverbFeed({ initialProverbs, currentUser }: ProverbFee
   const [hasMore, setHasMore] = useState(initialProverbs.length === 20)
   const [error, setError] = useState<string | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+
+  useEffect(() => {
+    setProverbs(initialProverbs)
+  }, [initialProverbs])
 
   const handleCreateProverb = () => {
     setIsCreateModalOpen(true)

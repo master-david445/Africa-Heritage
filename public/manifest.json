@@ -1,6 +1,6 @@
 {
-  "name": "African Heritage - Proverbs Platform",
-  "short_name": "African Heritage",
+  "name": "Koroba - African Proverbs Platform",
+  "short_name": "Koroba",
   "description": "Discover, share, and celebrate African proverbs and wisdom",
   "start_url": "/",
   "display": "standalone",
@@ -9,16 +9,20 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["education", "lifestyle", "social"],
+  "categories": [
+    "education",
+    "lifestyle",
+    "social"
+  ],
   "icons": [
     {
-      "src": "/logo.svg",
+      "src": "/koroba-logo.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo.svg",
+      "src": "/koroba-logo.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
@@ -30,14 +34,24 @@
       "short_name": "Explore",
       "description": "Browse African proverbs",
       "url": "/explore",
-      "icons": [{ "src": "/logo.svg", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/koroba-logo.svg",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "Share Proverb",
       "short_name": "Share",
       "description": "Share a proverb",
       "url": "/share",
-      "icons": [{ "src": "/logo.svg", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/koroba-logo.svg",
+          "sizes": "96x96"
+        }
+      ]
     }
   ]
 }

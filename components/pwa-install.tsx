@@ -59,7 +59,7 @@ export default function PWAInstall() {
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white rounded-lg shadow-lg border p-4 z-50">
       <div className="flex items-start gap-3">
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">Install African Heritage</h3>
+          <h3 className="font-semibold text-gray-900">Install Koroba</h3>
           <p className="text-sm text-gray-600 mt-1">
             Install our app for a better experience with offline access and notifications.
           </p>

@@ -103,7 +103,7 @@ export default function LoginPage() {
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
               <CardTitle className="text-2xl">Welcome Back</CardTitle>
-              <CardDescription className="text-orange-50">Login to your African Heritage account</CardDescription>
+              <CardDescription className="text-orange-50">Login to your Koroba account</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <form onSubmit={handleLogin}>
