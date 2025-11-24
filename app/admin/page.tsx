@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AlertCircle, Users, Flag, CheckCircle } from "lucide-react"
 import { getPlatformStats, getReportedContent, type PlatformStats, type ReportedContent } from "@/app/actions/admin"
+import { UserManagementTable } from "@/components/admin/user-management-table"
 
 export default function AdminDashboard() {
   const { user, profile, isLoading, refreshProfile } = useAuth()
@@ -313,7 +314,7 @@ export default function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="users" className="space-y-4 mt-4">
-                <div className="border rounded-lg p-4">
+                <div className="border rounded-lg p-4 bg-gray-50/50">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="font-semibold text-gray-900">User Management</p>
@@ -321,11 +322,7 @@ export default function AdminDashboard() {
                     </div>
                     <Users className="w-8 h-8 text-orange-500" />
                   </div>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <p>Total registered users: {stats?.totalUsers || 0}</p>
-                    <p>Active users (24h): {stats?.activeUsers || 0}</p>
-                    <p>Suspended accounts: {stats?.suspendedUsers || 0}</p>
-                  </div>
+                  <UserManagementTable />
                 </div>
               </TabsContent>
 
