@@ -8,8 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AlertCircle, Users, Flag, CheckCircle } from "lucide-react"
+import { AlertCircle, Users, CheckCircle } from "lucide-react"
 import { getPlatformStats, getReportedContent, type PlatformStats, type ReportedContent } from "@/app/actions/admin"
+import { UserManagementTable } from "@/components/admin/user-management-table"
+import { ProverbApprovalQueue } from "@/components/admin/proverb-approval-queue"
+import { ReportsTable } from "@/components/admin/reports-table"
+import { AnnouncementManager } from "@/components/admin/announcement-manager"
+import { FeedbackManager } from "@/components/admin/feedback-manager"
 
 export default function AdminDashboard() {
   const { user, profile, isLoading, refreshProfile } = useAuth()
@@ -21,18 +26,11 @@ export default function AdminDashboard() {
   const hasFetchedRef = useRef(false)
 
   useEffect(() => {
-    // Debug logging
-    console.log("[ADMIN] Loading state:", isLoading)
-    console.log("[ADMIN] User:", user?.id)
-    console.log("[ADMIN] Profile:", profile)
-    console.log("[ADMIN] Is admin:", profile?.is_admin)
-
     // Wait for auth to load
     if (isLoading) return
 
     // Check admin status
     if (!user || !profile?.is_admin) {
-      console.log("[ADMIN] Access denied - redirecting to home")
       router.push("/")
       return
     }
@@ -83,14 +81,9 @@ export default function AdminDashboard() {
         <div className="text-center max-w-md">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
           <p className="text-gray-600 mb-4">
+            You don&apos;t have admin privileges.
             You don&apos;t have admin privileges. Current status:
           </p>
-          <div className="bg-white p-4 rounded-lg shadow text-left text-sm">
-            <p><strong>User ID:</strong> {user?.id || 'None'}</p>
-            <p><strong>Profile:</strong> {profile ? 'Loaded' : 'Not loaded'}</p>
-            <p><strong>Is Admin:</strong> {profile?.is_admin ? 'Yes' : 'No'}</p>
-            <p><strong>Username:</strong> {profile?.username || 'N/A'}</p>
-          </div>
           <button
             onClick={refreshProfile}
             className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
@@ -100,27 +93,6 @@ export default function AdminDashboard() {
         </div>
       </div>
     )
-  }
-
-  const handleReportAction = (reportId: string, action: "approve" | "reject") => {
-    setReports(
-      reports.map((report) =>
-        report.id === reportId ? { ...report, status: action === "approve" ? "resolved" : "reviewed" } : report,
-      ),
-    )
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800"
-      case "reviewed":
-        return "bg-blue-100 text-blue-800"
-      case "resolved":
-        return "bg-green-100 text-green-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
   }
 
   const pendingReports = reports.filter((r) => r.status === "pending").length
@@ -239,7 +211,10 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="reports" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="approvals">
+                  Approvals
+                </TabsTrigger>
                 <TabsTrigger value="reports">
                   Reports
                   {pendingReports > 0 && (
@@ -249,71 +224,30 @@ export default function AdminDashboard() {
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="feedback">Feedback</TabsTrigger>
+                <TabsTrigger value="announcements">Announcements</TabsTrigger>
                 <TabsTrigger value="guidelines">Guidelines</TabsTrigger>
               </TabsList>
-              <TabsContent value="reports" className="space-y-4 mt-4">
-                {reports.length === 0 ? (
-                  <div className="text-center py-8">
-                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-                    <p className="text-gray-600">No reports to review</p>
-                  </div>
-                ) : (
-                  reports.map((report) => (
-                    <div key={report.id} className="border rounded-lg p-4 hover:bg-gray-50 transition">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Flag className="w-5 h-5 text-orange-500" />
-                          <div>
-                            <p className="font-semibold text-gray-900">
-                              {report.type.charAt(0).toUpperCase() + report.type.slice(1)} Report
-                            </p>
-                            <p className="text-sm text-gray-600">Reported by {report.reportedBy}</p>
-                          </div>
-                        </div>
-                        <Badge className={getStatusColor(report.status)}>{report.status}</Badge>
-                      </div>
 
-                      <div className="mb-3 p-3 bg-gray-50 rounded">
-                        <p className="text-sm text-gray-700">{report.content}</p>
-                      </div>
-
-                      <div className="flex items-center justify-between text-sm">
-                        <div>
-                          <p className="text-gray-600">
-                            <span className="font-semibold">Reason:</span> {report.reason}
-                          </p>
-                          <p className="text-gray-500 text-xs mt-1">
-                            {new Date(report.timestamp).toLocaleDateString()} {new Date(report.timestamp).toLocaleTimeString()}
-                          </p>
-                        </div>
-
-                        {report.status === "pending" && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleReportAction(report.id, "reject")}
-                              className="text-gray-600"
-                            >
-                              Review
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleReportAction(report.id, "approve")}
-                              className="bg-orange-600 hover:bg-orange-700"
-                            >
-                              Resolve
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+              <TabsContent value="approvals" className="space-y-4 mt-4">
+                <div className="border rounded-lg p-4 bg-gray-50/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="font-semibold text-gray-900">Proverb Approvals</p>
+                      <p className="text-sm text-gray-600">Review and approve user submitted proverbs</p>
                     </div>
-                  ))
-                )}
+                    <CheckCircle className="w-8 h-8 text-green-500" />
+                  </div>
+                  <ProverbApprovalQueue />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="reports" className="space-y-4 mt-4">
+                <ReportsTable />
               </TabsContent>
 
               <TabsContent value="users" className="space-y-4 mt-4">
-                <div className="border rounded-lg p-4">
+                <div className="border rounded-lg p-4 bg-gray-50/50">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="font-semibold text-gray-900">User Management</p>
@@ -321,12 +255,16 @@ export default function AdminDashboard() {
                     </div>
                     <Users className="w-8 h-8 text-orange-500" />
                   </div>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <p>Total registered users: {stats?.totalUsers || 0}</p>
-                    <p>Active users (24h): {stats?.activeUsers || 0}</p>
-                    <p>Suspended accounts: {stats?.suspendedUsers || 0}</p>
-                  </div>
+                  <UserManagementTable />
                 </div>
+              </TabsContent>
+
+              <TabsContent value="feedback" className="space-y-4 mt-4">
+                <FeedbackManager />
+              </TabsContent>
+
+              <TabsContent value="announcements" className="space-y-4 mt-4">
+                <AnnouncementManager />
               </TabsContent>
 
               <TabsContent value="guidelines" className="space-y-4 mt-4">

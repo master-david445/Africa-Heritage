@@ -37,7 +37,6 @@ jobs:
     name: Approve Migration
     needs: validate-migrations
     runs-on: ubuntu-latest
-    environment: database-migration
     
     steps:
       - name: Migration approved
