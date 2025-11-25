@@ -237,11 +237,6 @@ export default function AdminDashboard() {
                       <p className="text-sm text-gray-600">Review and approve user submitted proverbs</p>
                     </div>
                     <CheckCircle className="w-8 h-8 text-green-500" />
-              <TabsContent value="reports" className="space-y-4 mt-4">
-                {reports.length === 0 ? (
-                  <div className="text-center py-8">
-                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
-                    <p className="text-gray-600">No reports to review</p>
                   </div>
                   <ProverbApprovalQueue />
                 </div>
