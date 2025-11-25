@@ -8,6 +8,7 @@ import { QueryProvider } from "@/lib/query-client"
 import ErrorBoundary from "@/components/error-boundary"
 import PWAInstall from "@/components/pwa-install"
 import { Toaster } from "sonner"
+import { FeedbackWidget } from "@/components/feedback-widget"
 import "./globals.css"
 
 const montserrat = Montserrat({
@@ -126,6 +127,7 @@ export default function RootLayout({
             <ThemeProvider>
               <AuthProvider>
                 {children}
+                <FeedbackWidget />
                 <MobileDebugInfo />
                 <PWAInstall />
                 <Toaster position="top-right" richColors />
