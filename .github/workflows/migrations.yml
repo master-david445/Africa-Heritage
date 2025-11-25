@@ -30,7 +30,8 @@ jobs:
       - name: List new migrations
         run: |
           echo "New migrations detected:"
-          git diff --name-only HEAD~1 HEAD -- scripts/
+          git diff --name-only HEAD~1 HEAD -- scripts/ 2>/dev/null || echo "All SQL files in scripts/"
+          ls -la scripts/*.sql || echo "No migration files found"
           
   # Manual approval required for production migrations
   approve-migration:
