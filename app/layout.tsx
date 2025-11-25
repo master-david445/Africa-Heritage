@@ -127,7 +127,6 @@ export default function RootLayout({
             <ThemeProvider>
               <AuthProvider>
                 {children}
-                <FeedbackWidget />
                 <MobileDebugInfo />
                 <PWAInstall />
                 <Toaster position="top-right" richColors />

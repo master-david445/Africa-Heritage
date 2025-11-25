@@ -82,6 +82,7 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
           <p className="text-gray-600 mb-4">
             You don&apos;t have admin privileges.
+            You don&apos;t have admin privileges. Current status:
           </p>
           <button
             onClick={refreshProfile}
@@ -236,6 +237,11 @@ export default function AdminDashboard() {
                       <p className="text-sm text-gray-600">Review and approve user submitted proverbs</p>
                     </div>
                     <CheckCircle className="w-8 h-8 text-green-500" />
+              <TabsContent value="reports" className="space-y-4 mt-4">
+                {reports.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                    <p className="text-gray-600">No reports to review</p>
                   </div>
                   <ProverbApprovalQueue />
                 </div>
@@ -285,10 +291,10 @@ export default function AdminDashboard() {
                   </ul>
                 </div>
               </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            </Tabs >
+          </CardContent >
+        </Card >
+      </div >
+    </div >
   )
 }
