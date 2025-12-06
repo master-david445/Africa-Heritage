@@ -6,6 +6,8 @@ import type {
   UpdatePasswordInput,
   CheckUsernameAvailabilityInput
 } from "@/lib/validations/profile"
+import { CacheService, CACHE_TTL } from "@/lib/utils/cache"
+import { logger } from "@/lib/utils/logger"
 
 /**
  * Profile service layer
@@ -51,14 +53,20 @@ export class ProfileService {
         .single()
 
       if (error) {
-        console.error("[PROFILE_SERVICE] Update profile error:", error)
+        logger.error("[PROFILE_SERVICE] Update profile error:", error)
         throw new Error(`Failed to update profile: ${error.message}`)
       }
 
-      console.log("[PROFILE_SERVICE] Profile updated successfully")
+      // Invalidate cache
+      await CacheService.del(CacheService.getProfileKey(updates.username))
+      if (updates.username !== currentUser.profile.username) {
+        await CacheService.del(CacheService.getProfileKey(currentUser.profile.username))
+      }
+
+      logger.info("[PROFILE_SERVICE] Profile updated successfully")
       return data
     } catch (error) {
-      console.error("[PROFILE_SERVICE] Update profile error:", error)
+      logger.error("[PROFILE_SERVICE] Update profile error:", error)
       throw error
     }
   }
@@ -89,14 +97,14 @@ export class ProfileService {
       })
 
       if (authError) {
-        console.error("[PROFILE_SERVICE] Update email auth error:", authError)
+        logger.error("[PROFILE_SERVICE] Update email auth error:", authError)
         throw new Error(`Failed to update email: ${authError.message}`)
       }
 
-      console.log("[PROFILE_SERVICE] Email update initiated successfully")
+      logger.info("[PROFILE_SERVICE] Email update initiated successfully")
       return { success: true, message: "Email update initiated. Please check your email for confirmation." }
     } catch (error) {
-      console.error("[PROFILE_SERVICE] Update email error:", error)
+      logger.error("[PROFILE_SERVICE] Update email error:", error)
       throw error
     }
   }
@@ -127,14 +135,14 @@ export class ProfileService {
       })
 
       if (authError) {
-        console.error("[PROFILE_SERVICE] Update password auth error:", authError)
+        logger.error("[PROFILE_SERVICE] Update password auth error:", authError)
         throw new Error(`Failed to update password: ${authError.message}`)
       }
 
-      console.log("[PROFILE_SERVICE] Password updated successfully")
+      logger.info("[PROFILE_SERVICE] Password updated successfully")
       return { success: true, message: "Password updated successfully" }
     } catch (error) {
-      console.error("[PROFILE_SERVICE] Update password error:", error)
+      logger.error("[PROFILE_SERVICE] Update password error:", error)
       throw error
     }
   }
@@ -163,15 +171,15 @@ export class ProfileService {
       const { data, error } = await query.single()
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error("[PROFILE_SERVICE] Username availability check error:", error)
+        logger.error("[PROFILE_SERVICE] Username availability check error:", error)
         throw new Error("Failed to check username availability")
       }
 
       const isAvailable = !data
-      console.log(`[PROFILE_SERVICE] Username "${input.username}" availability:`, isAvailable)
+      logger.info(`[PROFILE_SERVICE] Username "${input.username}" availability:`, { isAvailable })
       return isAvailable
     } catch (error) {
-      console.error("[PROFILE_SERVICE] Check username availability error:", error)
+      logger.error("[PROFILE_SERVICE] Check username availability error:", error)
       throw error
     }
   }
@@ -181,6 +189,13 @@ export class ProfileService {
    */
   static async getUserProfile(username: string) {
     try {
+      // Check cache first
+      const cacheKey = CacheService.getProfileKey(username)
+      const cachedProfile = await CacheService.get(cacheKey)
+      if (cachedProfile) {
+        return cachedProfile
+      }
+
       const supabase = await createClient()
 
       const { data, error } = await supabase
@@ -190,13 +205,18 @@ export class ProfileService {
         .single()
 
       if (error) {
-        console.log("[PROFILE_SERVICE] Get user profile error:", error.message)
+        logger.warn("[PROFILE_SERVICE] Get user profile error:", { message: error.message })
         return null
+      }
+
+      // Cache the result
+      if (data) {
+        await CacheService.set(cacheKey, data, CACHE_TTL.PROFILE)
       }
 
       return data
     } catch (error) {
-      console.error("[PROFILE_SERVICE] Get user profile error:", error)
+      logger.error("[PROFILE_SERVICE] Get user profile error:", error)
       throw error
     }
   }
@@ -215,13 +235,13 @@ export class ProfileService {
         .single()
 
       if (error) {
-        console.log("[PROFILE_SERVICE] Get user profile by ID error:", error.message)
+        logger.warn("[PROFILE_SERVICE] Get user profile by ID error:", { message: error.message })
         return null
       }
 
       return data
     } catch (error) {
-      console.error("[PROFILE_SERVICE] Get user profile by ID error:", error)
+      logger.error("[PROFILE_SERVICE] Get user profile by ID error:", error)
       throw error
     }
   }
@@ -231,6 +251,13 @@ export class ProfileService {
    */
   static async getProfileStats(userId: string) {
     try {
+      // Check cache first
+      const cacheKey = CacheService.getUserStatsKey(userId)
+      const cachedStats = await CacheService.get(cacheKey)
+      if (cachedStats) {
+        return cachedStats
+      }
+
       const supabase = await createClient()
 
       // Get proverbs count
@@ -257,10 +284,13 @@ export class ProfileService {
         followingCount: followingCount || 0,
       }
 
-      console.log(`[PROFILE_SERVICE] Profile stats for ${userId}:`, stats)
+      // Cache the result
+      await CacheService.set(cacheKey, stats, CACHE_TTL.USER_STATS)
+
+      logger.info(`[PROFILE_SERVICE] Profile stats for ${userId}:`, stats)
       return stats
     } catch (error) {
-      console.error("[PROFILE_SERVICE] Get profile stats error:", error)
+      logger.error("[PROFILE_SERVICE] Get profile stats error:", error)
       throw error
     }
   }
@@ -297,7 +327,7 @@ export class ProfileService {
         .limit(10)
 
       if (proverbsError) {
-        console.error("[PROFILE_SERVICE] Get proverbs error:", proverbsError)
+        logger.error("[PROFILE_SERVICE] Get proverbs error:", proverbsError)
       }
 
       // Get followers (limit for performance)
@@ -315,7 +345,7 @@ export class ProfileService {
         .limit(10)
 
       if (followersError) {
-        console.error("[PROFILE_SERVICE] Get followers error:", followersError)
+        logger.error("[PROFILE_SERVICE] Get followers error:", followersError)
       }
 
       // Get following (limit for performance)
@@ -333,7 +363,7 @@ export class ProfileService {
         .limit(10)
 
       if (followingError) {
-        console.error("[PROFILE_SERVICE] Get following error:", followingError)
+        logger.error("[PROFILE_SERVICE] Get following error:", followingError)
       }
 
       return {
@@ -344,7 +374,7 @@ export class ProfileService {
         following: following || [],
       }
     } catch (error) {
-      console.error("[PROFILE_SERVICE] Get profile page data error:", error)
+      logger.error("[PROFILE_SERVICE] Get profile page data error:", error)
       throw error
     }
   }

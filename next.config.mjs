@@ -1,11 +1,15 @@
+import bundleAnalyzer from '@next/bundle-analyzer';
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Enable gzip compression
+  compress: true,
+
+  // Image optimization
   images: {
     remotePatterns: [
       {
@@ -14,20 +18,34 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '*.supabase.co',
+        hostname: 'avatar.vercel.sh',
       },
       {
         protocol: 'https',
-        hostname: 'avatars.githubusercontent.com',
+        hostname: 'lh3.googleusercontent.com', // Google Auth avatars
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com', // GitHub Auth avatars
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com', // If using Cloudinary
       },
     ],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    formats: ['image/avif', 'image/webp'],
   },
-  serverExternalPackages: ['@supabase/supabase-js'],
-  // Add security headers
+
+  // Server external packages
+  serverExternalPackages: ['@upstash/ratelimit', '@upstash/redis'],
+
+  // Security headers
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/:path*',
         headers: [
           {
             key: 'X-Frame-Options',
@@ -47,8 +65,16 @@ const nextConfig = {
           },
         ],
       },
-    ]
+    ];
   },
-}
 
-export default nextConfig
+  // Strict build checks
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+};
+
+export default withBundleAnalyzer(nextConfig);

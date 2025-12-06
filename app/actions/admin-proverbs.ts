@@ -23,7 +23,7 @@ export async function getPendingProverbs() {
         .from("proverbs")
         .select(`
       id,
-      content,
+      proverb,
       meaning,
       origin,
       category,
@@ -45,7 +45,7 @@ export async function getPendingProverbs() {
 
     return data.map((item: any) => ({
         id: item.id,
-        content: item.content,
+        content: item.proverb,  // Map 'proverb' column to 'content' property
         meaning: item.meaning,
         origin: item.origin,
         category: item.category,

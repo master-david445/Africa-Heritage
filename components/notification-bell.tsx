@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Bell, BellRing } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { getUserNotifications, getUnreadNotificationCount, markNotificationAsRead, markAllNotificationsAsRead } from "@/app/actions/notifications"
 import { formatDistanceToNow } from "date-fns"
 import type { Notification } from "@/lib/types"
@@ -78,6 +78,8 @@ export default function NotificationBell() {
         </Button>
       </DialogTrigger>
       <DialogContent className="w-80 p-0">
+        <DialogTitle className="sr-only">Notifications</DialogTitle>
+        <DialogDescription className="sr-only">View and manage your notifications</DialogDescription>
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Notifications</h3>
@@ -104,15 +106,13 @@ export default function NotificationBell() {
             notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer ${
-                  !notification.is_read ? "bg-blue-50" : ""
-                }`}
+                className={`p-4 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer ${!notification.is_read ? "bg-blue-50" : ""
+                  }`}
                 onClick={() => !notification.is_read && handleMarkAsRead(notification.id)}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                    !notification.is_read ? "bg-blue-600" : "bg-gray-300"
-                  }`} />
+                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${!notification.is_read ? "bg-blue-600" : "bg-gray-300"
+                    }`} />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm">{notification.title}</p>
                     {notification.message && (

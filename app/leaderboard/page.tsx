@@ -137,7 +137,7 @@ export default function LeaderboardPage() {
                     <CardTitle className="text-sm font-medium text-gray-600">Top Contributor</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-orange-600">
+                    <div className="text-2xl font-bold text-orange-600 truncate">
                       {stats?.topContributor?.username || leaderboardData[0]?.username || "No users yet"}
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
@@ -232,14 +232,14 @@ export default function LeaderboardPage() {
                           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white font-bold text-lg">
                             {getRankIcon(user.rank) || `#${user.rank}`}
                           </div>
-                          <div className="flex-1">
-                            <p className="font-semibold text-gray-900">{user.username}</p>
-                            {user.badge && <Badge className="mt-1 bg-orange-600 text-white">{user.badge}</Badge>}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate">{user.username}</p>
+                            {user.badge && <Badge className="mt-1 bg-orange-600 text-white text-xs">{user.badge}</Badge>}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-6 text-right">
-                          <div>
+                        <div className="flex items-center gap-3 md:gap-6 text-right">
+                          <div className="hidden sm:block">
                             <div className="flex items-center gap-1 font-semibold text-gray-900">
                               <Zap className="w-4 h-4 text-yellow-500" />
                               {user.points}
@@ -250,7 +250,7 @@ export default function LeaderboardPage() {
                             <div className="font-semibold text-gray-900">{user.proverbs_count}</div>
                             <p className="text-xs text-gray-600">proverbs</p>
                           </div>
-                          <div>
+                          <div className="hidden md:block">
                             <div className="flex items-center gap-1 font-semibold text-gray-900">
                               <TrendingUp className="w-4 h-4 text-orange-600" />
                               {user.followers_count}

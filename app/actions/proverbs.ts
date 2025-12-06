@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from "@/lib/supabase/server"
 import { createProverbSchema, CreateProverbInput } from "@/lib/validations"
 import { checkAndAwardBadges } from "@/app/actions/badges"
 import { awardPoints } from "@/app/actions/points"
+import { logger } from "@/lib/utils/logger"
 
 export async function createProverb(validatedData: CreateProverbInput) {
   const supabase = await createClient()
@@ -31,7 +32,7 @@ export async function createProverb(validatedData: CreateProverbInput) {
     })
 
   if (profileError) {
-    console.error("Profile creation error:", profileError)
+    logger.error("Profile creation error:", profileError)
     // Continue anyway, as the insert might still work
   }
 
@@ -52,18 +53,18 @@ export async function createProverb(validatedData: CreateProverbInput) {
     .single()
 
   if (error) {
-    console.error("Proverb creation error:", error)
+    logger.error("Proverb creation error:", error)
     throw error
   }
 
   // Check and award badges asynchronously
   checkAndAwardBadges(user.id).catch(err =>
-    console.error("Error awarding badges:", err)
+    logger.error("Error awarding badges:", err)
   )
 
   // Award points asynchronously
   awardPoints(user.id, 10, 'created_proverb').catch(err =>
-    console.error("Error awarding points:", err)
+    logger.error("Error awarding points:", err)
   )
 
   return data
@@ -87,12 +88,12 @@ export async function getAllProverbs(limit = 20, offset = 0) {
   if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
     supabase = await createAdminClient()
   } else {
-    console.warn('[getAllProverbs] SUPABASE_SERVICE_ROLE_KEY missing, falling back to anon client')
+    logger.warn('[getAllProverbs] SUPABASE_SERVICE_ROLE_KEY missing, falling back to anon client')
     supabase = await createClient()
   }
 
   try {
-    console.log(`[getAllProverbs] Fetching proverbs with limit=${limit}, offset=${offset}`)
+    logger.info(`[getAllProverbs] Fetching proverbs with limit=${limit}, offset=${offset}`)
 
     // First, get the proverbs with user profiles
     const { data, error } = await supabase
@@ -105,12 +106,12 @@ export async function getAllProverbs(limit = 20, offset = 0) {
       .range(offset, offset + limit - 1)
 
     if (error) {
-      console.error('[getAllProverbs] Supabase error:', error)
+      logger.error('[getAllProverbs] Supabase error:', error)
       throw error
     }
 
     if (!data || data.length === 0) {
-      console.log('[getAllProverbs] No proverbs found')
+      logger.info('[getAllProverbs] No proverbs found')
       return []
     }
 
@@ -167,11 +168,11 @@ export async function getAllProverbs(limit = 20, offset = 0) {
       bookmarks_count: bookmarksCount.get(proverb.id) || 0,
     }))
 
-    console.log(`[getAllProverbs] Successfully fetched ${proverbsWithCounts.length} proverbs`)
+    logger.info(`[getAllProverbs] Successfully fetched ${proverbsWithCounts.length} proverbs`)
     return proverbsWithCounts
 
   } catch (error) {
-    console.error('[getAllProverbs] Error:', error)
+    logger.error('[getAllProverbs] Error:', error)
     return []
   }
 }
@@ -248,7 +249,7 @@ export async function getProverbOfTheDay() {
       .select()
       .single()
 
-    if (insertError) console.warn('Tracker creation failed', insertError)
+    if (insertError) logger.warn('Tracker creation failed', insertError)
     tracker = newTracker
     currentIndex = 0
     needsUpdate = false
@@ -271,9 +272,9 @@ export async function getProverbOfTheDay() {
       .eq("id", tracker.id)
       .then(({ error }) => {
         if (error) {
-          console.warn('Failed to update tracker:', error)
+          logger.warn('Failed to update tracker:', error)
         } else {
-          console.log('Proverb of the day tracker updated')
+          logger.info('Proverb of the day tracker updated')
         }
       })
   }

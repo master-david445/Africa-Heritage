@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/client"
 import type { SignInInput } from "@/lib/validations/profile"
+import { validateEmail } from "@/lib/validations/profile"
+import { logger } from "@/lib/utils/logger"
 
 /**
  * Authentication service layer
@@ -30,7 +32,7 @@ export class AuthService {
 
       return !error
     } catch (error) {
-      console.error("[AUTH_SERVICE] Password verification error:", error)
+      logger.error("[AUTH_SERVICE] Password verification error:", error)
       return false
     }
   }
@@ -56,7 +58,7 @@ export class AuthService {
         .single()
 
       if (profileError) {
-        console.error("[AUTH_SERVICE] Failed to get profile:", profileError)
+        logger.error("[AUTH_SERVICE] Failed to get profile:", profileError)
         return null
       }
 
@@ -65,7 +67,7 @@ export class AuthService {
         profile,
       }
     } catch (error) {
-      console.error("[AUTH_SERVICE] Get current user error:", error)
+      logger.error("[AUTH_SERVICE] Get current user error:", error)
       return null
     }
   }
@@ -97,13 +99,13 @@ export class AuthService {
         .single()
 
       if (error) {
-        console.log("[AUTH_SERVICE] User lookup error:", error.message)
+        logger.warn("[AUTH_SERVICE] User lookup error:", { message: error.message })
         return null
       }
 
       return data
     } catch (error) {
-      console.error("[AUTH_SERVICE] Get user by username error:", error)
+      logger.error("[AUTH_SERVICE] Get user by username error:", error)
       return null
     }
   }
@@ -112,9 +114,7 @@ export class AuthService {
    * Validates if an identifier is an email or username
    */
   static parseIdentifier(identifier: string): { type: 'email' | 'username'; value: string } {
-    // Proper email regex validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (emailRegex.test(identifier)) {
+    if (validateEmail(identifier)) {
       return { type: 'email', value: identifier }
     }
 
@@ -154,7 +154,7 @@ export class AuthService {
 
       return data
     } catch (error) {
-      console.error("[AUTH_SERVICE] Sign in error:", error)
+      logger.error("[AUTH_SERVICE] Sign in error:", error)
       throw error
     }
   }

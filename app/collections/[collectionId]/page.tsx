@@ -8,6 +8,7 @@ import CollectionStats from "@/components/collection-stats"
 import { toast } from "sonner"
 import type { Collection, Proverb, Profile } from "@/lib/types"
 import type { Database } from "@/lib/database.types"
+import { logger } from "@/lib/utils/logger"
 
 type ProverbWithUser = Database["public"]["Tables"]["proverbs"]["Row"] & {
   profiles: Database["public"]["Tables"]["profiles"]["Row"] | null
@@ -149,7 +150,7 @@ export default function CollectionDetailPage() {
         // Redirect to collections page
         window.location.href = "/collections"
       } catch (error) {
-        console.error("[v0] Delete collection error:", error)
+        logger.error("[v0] Delete collection error:", error)
         toast.error("Failed to delete collection")
       }
     }
@@ -170,7 +171,7 @@ export default function CollectionDetailPage() {
         toast.success("Link copied to clipboard!")
       }
     } catch (error) {
-      console.error("[v0] Share collection error:", error)
+      logger.error("[v0] Share collection error:", error)
       toast.error("Failed to share collection")
     }
   }
@@ -182,7 +183,7 @@ export default function CollectionDetailPage() {
   const handleUpdateCollection = (updatedCollection: Collection) => {
     // Update local state - in a real app, this would trigger a re-fetch or optimistic update
     // For now, we'll just show success message since the modal handles the toast
-    console.log("Collection updated:", updatedCollection)
+    logger.info("Collection updated:", updatedCollection)
   }
 
   return (

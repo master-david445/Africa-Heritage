@@ -4,6 +4,7 @@ import React from "react"
 import { AlertTriangle, RefreshCw, Bug } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { logger } from "@/lib/utils/logger"
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -32,7 +33,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    const { level = 'component', name = 'Unknown', enableSentry = true } = this.props
+    const { level = 'component', name = 'Unknown' } = this.props
     const errorId = this.state.errorId
 
     // Enhanced logging with context
@@ -40,45 +41,13 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       errorId,
       level,
       component: name,
-      error: {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      },
       errorInfo,
       timestamp: new Date().toISOString(),
       userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'SSR',
       url: typeof window !== 'undefined' ? window.location.href : 'SSR',
     }
 
-    console.error(`[ERROR_BOUNDARY] ${level.toUpperCase()} ERROR in ${name}:`, errorContext)
-
-    // Send to monitoring service (Sentry, LogRocket, etc.)
-    if (enableSentry && typeof window !== 'undefined') {
-      // Placeholder for Sentry integration
-      // Sentry.captureException(error, { contexts: { errorBoundary: errorContext } })
-
-      // For now, send to console with structured logging
-      console.error('[ERROR_BOUNDARY] Error sent to monitoring:', errorId)
-    }
-
-    // Could also send to custom logging endpoint
-    this.logErrorToService(errorContext)
-  }
-
-  private async logErrorToService(errorContext: any) {
-    try {
-      // Placeholder for custom error logging service
-      // await fetch('/api/errors', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(errorContext)
-      // })
-
-      console.log('[ERROR_BOUNDARY] Error logged to service:', errorContext.errorId)
-    } catch (logError) {
-      console.error('[ERROR_BOUNDARY] Failed to log error:', logError)
-    }
+    logger.error(`[ERROR_BOUNDARY] ${level.toUpperCase()} ERROR in ${name}:`, error, errorContext)
   }
 
   resetError = () => {
@@ -87,7 +56,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   render() {
     if (this.state.hasError) {
-      const { level = 'component', name = 'Unknown' } = this.props
+      const { level = 'component' } = this.props
 
       if (this.props.fallback) {
         const FallbackComponent = this.props.fallback
