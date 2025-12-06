@@ -104,7 +104,7 @@ export default function FeedbackPage() {
                                 <CardHeader>
                                     <CardTitle>Share Your Feedback</CardTitle>
                                     <CardDescription>
-                                        Request a new feature or report a bug you've encountered
+                                        {"Request a new feature or report a bug you've encountered"}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -116,8 +116,8 @@ export default function FeedbackPage() {
                                                     type="button"
                                                     onClick={() => setType("feature_request")}
                                                     className={`p-4 border-2 rounded-lg transition ${type === "feature_request"
-                                                            ? "border-orange-500 bg-orange-50"
-                                                            : "border-gray-200 hover:border-gray-300"
+                                                        ? "border-orange-500 bg-orange-50"
+                                                        : "border-gray-200 hover:border-gray-300"
                                                         }`}
                                                 >
                                                     <Lightbulb className={`h-6 w-6 mx-auto mb-2 ${type === "feature_request" ? "text-orange-600" : "text-gray-400"
@@ -129,8 +129,8 @@ export default function FeedbackPage() {
                                                     type="button"
                                                     onClick={() => setType("bug_report")}
                                                     className={`p-4 border-2 rounded-lg transition ${type === "bug_report"
-                                                            ? "border-red-500 bg-red-50"
-                                                            : "border-gray-200 hover:border-gray-300"
+                                                        ? "border-red-500 bg-red-50"
+                                                        : "border-gray-200 hover:border-gray-300"
                                                         }`}
                                                 >
                                                     <Bug className={`h-6 w-6 mx-auto mb-2 ${type === "bug_report" ? "text-red-600" : "text-gray-400"
@@ -201,7 +201,7 @@ export default function FeedbackPage() {
                             ) : myFeedback.length === 0 ? (
                                 <Card>
                                     <CardContent className="py-12 text-center">
-                                        <p className="text-gray-500">You haven't submitted any feedback yet</p>
+                                        <p className="text-gray-500">{"You haven't submitted any feedback yet"}</p>
                                     </CardContent>
                                 </Card>
                             ) : (

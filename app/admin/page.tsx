@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AlertCircle, Users, CheckCircle } from "lucide-react"
+import { AlertCircle, Users, CheckCircle, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 import { getPlatformStats, getReportedContent, type PlatformStats, type ReportedContent } from "@/app/actions/admin"
 import { UserManagementTable } from "@/components/admin/user-management-table"
 import { ProverbApprovalQueue } from "@/components/admin/proverb-approval-queue"
@@ -101,6 +102,12 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="mb-4">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
           <p className="text-gray-600">Manage platform content, users, and community guidelines</p>
         </div>
@@ -211,22 +218,22 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="reports" className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="approvals">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1">
+                <TabsTrigger value="approvals" className="text-xs sm:text-sm">
                   Approvals
                 </TabsTrigger>
-                <TabsTrigger value="reports">
+                <TabsTrigger value="reports" className="text-xs sm:text-sm">
                   Reports
                   {pendingReports > 0 && (
-                    <Badge variant="destructive" className="ml-2">
+                    <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs">
                       {pendingReports}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="users">Users</TabsTrigger>
-                <TabsTrigger value="feedback">Feedback</TabsTrigger>
-                <TabsTrigger value="announcements">Announcements</TabsTrigger>
-                <TabsTrigger value="guidelines">Guidelines</TabsTrigger>
+                <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+                <TabsTrigger value="feedback" className="text-xs sm:text-sm">Feedback</TabsTrigger>
+                <TabsTrigger value="announcements" className="text-xs sm:text-sm">Announcements</TabsTrigger>
+                <TabsTrigger value="guidelines" className="text-xs sm:text-sm">Guidelines</TabsTrigger>
               </TabsList>
 
               <TabsContent value="approvals" className="space-y-4 mt-4">

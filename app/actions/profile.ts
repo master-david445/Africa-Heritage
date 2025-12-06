@@ -4,6 +4,8 @@ import { ProfileService } from "@/lib/services/profile"
 import { AuthService } from "@/lib/services/auth"
 import { updateProfileSchema, updateEmailSchema, updatePasswordSchema, checkUsernameAvailabilitySchema } from "@/lib/validations/profile"
 import { revalidatePath } from "next/cache"
+import { logSecurityEvent } from "@/lib/utils/security-logger"
+import { logger } from "@/lib/utils/logger"
 
 // Rate limiting store for profile actions (in production, use Redis)
 const profileActionLimits = new Map<string, { count: number; resetTime: number }>()
@@ -37,7 +39,7 @@ export async function getCurrentUser() {
     const result = await AuthService.getCurrentUser()
     return result?.profile || null
   } catch (error) {
-    console.error("[PROFILE_ACTIONS] Get current user error:", error)
+    logger.error("[PROFILE_ACTIONS] Get current user error:", error)
     throw new Error("Failed to get current user")
   }
 }
@@ -51,7 +53,7 @@ export async function getUserProfile(username: string) {
     const profile = await ProfileService.getUserProfile(username)
     return profile
   } catch (error) {
-    console.error("[PROFILE_ACTIONS] Get user profile error:", error)
+    logger.error("[PROFILE_ACTIONS] Get user profile error:", error)
     throw error
   }
 }
@@ -65,7 +67,7 @@ export async function getUserProfileById(userId: string) {
     const profile = await ProfileService.getUserProfileById(userId)
     return profile
   } catch (error) {
-    console.error("[PROFILE_ACTIONS] Get user profile by ID error:", error)
+    logger.error("[PROFILE_ACTIONS] Get user profile by ID error:", error)
     throw error
   }
 }
@@ -93,7 +95,7 @@ export async function updateProfile(updates: {
       throw new Error("Too many profile updates. Please wait before trying again.")
     }
 
-    console.log("[PROFILE_ACTIONS] Updating profile for user:", currentUser.user.id)
+    logger.info("[PROFILE_ACTIONS] Updating profile for user:", { userId: currentUser.user.id })
 
     const result = await ProfileService.updateProfile(validationResult.data)
 
@@ -103,7 +105,7 @@ export async function updateProfile(updates: {
 
     return result
   } catch (error) {
-    console.error("[PROFILE_ACTIONS] Update profile error:", error)
+    logger.error("[PROFILE_ACTIONS] Update profile error:", error)
     throw error
   }
 }
@@ -117,7 +119,7 @@ export async function getProfileStats(userId: string) {
     const stats = await ProfileService.getProfileStats(userId)
     return stats
   } catch (error) {
-    console.error("[PROFILE_ACTIONS] Get profile stats error:", error)
+    logger.error("[PROFILE_ACTIONS] Get profile stats error:", error)
     throw error
   }
 }
@@ -143,16 +145,23 @@ export async function updateEmail(input: {
       throw new Error("Too many email change attempts. Please wait before trying again.")
     }
 
-    console.log("[PROFILE_ACTIONS] Updating email for user:", currentUser.user.id)
+    logger.info("[PROFILE_ACTIONS] Updating email for user:", { userId: currentUser.user.id })
 
     const result = await ProfileService.updateEmail(validationResult.data)
 
     // Log security event
-    console.log(`[SECURITY] Email change initiated for user ${currentUser.user.id} to ${input.email}`)
+    await logSecurityEvent({
+      user_id: currentUser.user.id,
+      event_type: 'email_change_requested',
+      metadata: {
+        old_email: currentUser.user.email,
+        new_email: input.email,
+      },
+    })
 
     return result
   } catch (error) {
-    console.error("[PROFILE_ACTIONS] Update email error:", error)
+    logger.error("[PROFILE_ACTIONS] Update email error:", error)
     throw error
   }
 }
@@ -179,16 +188,22 @@ export async function updatePassword(input: {
       throw new Error("Too many password change attempts. Please wait before trying again.")
     }
 
-    console.log("[PROFILE_ACTIONS] Updating password for user:", currentUser.user.id)
+    logger.info("[PROFILE_ACTIONS] Updating password for user:", { userId: currentUser.user.id })
 
     const result = await ProfileService.updatePassword(validationResult.data)
 
     // Log security event
-    console.log(`[SECURITY] Password changed for user ${currentUser.user.id}`)
+    await logSecurityEvent({
+      user_id: currentUser.user.id,
+      event_type: 'password_changed',
+      metadata: {
+        timestamp: new Date().toISOString(),
+      },
+    })
 
     return result
   } catch (error) {
-    console.error("[PROFILE_ACTIONS] Update password error:", error)
+    logger.error("[PROFILE_ACTIONS] Update password error:", error)
     throw error
   }
 }
@@ -204,7 +219,7 @@ export async function checkUsernameAvailability(username: string): Promise<boole
     const isAvailable = await ProfileService.checkUsernameAvailability(validationResult.data)
     return isAvailable
   } catch (error) {
-    console.error("[PROFILE_ACTIONS] Check username availability error:", error)
+    logger.error("[PROFILE_ACTIONS] Check username availability error:", error)
     return false
   }
 }
@@ -218,7 +233,7 @@ export async function getProfilePageData(userId: string) {
     const data = await ProfileService.getProfilePageData(userId)
     return data
   } catch (error) {
-    console.error("[PROFILE_ACTIONS] Get profile page data error:", error)
+    logger.error("[PROFILE_ACTIONS] Get profile page data error:", error)
     throw error
   }
 }

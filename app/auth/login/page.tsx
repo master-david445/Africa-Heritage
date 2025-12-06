@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { logger } from "@/lib/utils/logger"
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("")
@@ -53,7 +54,26 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      console.log("[LOGIN] Attempting login for:", identifier)
+      logger.info("[LOGIN] Attempting login for:", { identifier })
+
+      // Check rate limit
+      try {
+        const rateLimitRes = await fetch('/api/auth/check-rate-limit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier }),
+        })
+
+        if (!rateLimitRes.ok) {
+          const data = await rateLimitRes.json()
+          setError(data.error || "Too many login attempts. Please try again later.")
+          setIsLoading(false)
+          return
+        }
+      } catch (err) {
+        // Ignore rate limit check errors (fail open)
+        logger.error("Rate limit check failed:", err)
+      }
 
       // Import AuthService dynamically to avoid SSR issues
       const { AuthService } = await import("@/lib/services/auth")
@@ -64,8 +84,8 @@ export default function LoginPage() {
         password,
       })
 
-      console.log("[LOGIN] Login successful, user:", result.user?.id)
-      console.log("[LOGIN] Session:", result.session ? "exists" : "null")
+      logger.info("[LOGIN] Login successful, user:", { userId: result.user?.id })
+      logger.info("[LOGIN] Session:", { exists: !!result.session })
 
       // Wait a moment for auth state to propagate
       await new Promise(resolve => setTimeout(resolve, 100))
@@ -74,7 +94,7 @@ export default function LoginPage() {
       router.push("/")
       router.refresh()
     } catch (error: unknown) {
-      console.error("[LOGIN] Login failed:", error)
+      logger.error("[LOGIN] Login failed:", error)
 
       // Provide more specific error messages
       let errorMessage = "An error occurred during login"

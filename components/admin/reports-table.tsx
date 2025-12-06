@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
     Table,
     TableBody,
@@ -32,7 +32,7 @@ export function ReportsTable() {
     const [filter, setFilter] = useState<"all" | "pending" | "resolved">("all")
     const { toast } = useToast()
 
-    const fetchReports = async () => {
+    const fetchReports = useCallback(async () => {
         try {
             setLoading(true)
             const data = await getReports()
@@ -46,11 +46,11 @@ export function ReportsTable() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [toast])
 
     useEffect(() => {
         fetchReports()
-    }, [])
+    }, [fetchReports])
 
     const handleStatusUpdate = async (id: string, status: Report["status"]) => {
         try {

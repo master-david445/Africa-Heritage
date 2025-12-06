@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { logger } from "@/lib/utils/logger"
 
 export async function awardPoints(userId: string, amount: number, reason: string) {
     const supabase = await createClient()
@@ -13,7 +14,7 @@ export async function awardPoints(userId: string, amount: number, reason: string
         .single()
 
     if (fetchError || !profile) {
-        console.error(`[awardPoints] Error fetching profile for user ${userId}:`, fetchError)
+        logger.error(`[awardPoints] Error fetching profile for user ${userId}:`, fetchError)
         return
     }
 
@@ -27,8 +28,8 @@ export async function awardPoints(userId: string, amount: number, reason: string
         .eq("id", userId)
 
     if (updateError) {
-        console.error(`[awardPoints] Error updating points for user ${userId}:`, updateError)
+        logger.error(`[awardPoints] Error updating points for user ${userId}:`, updateError)
     } else {
-        console.log(`[awardPoints] Awarded ${amount} points to ${userId} for ${reason}. New total: ${newPoints}`)
+        logger.info(`[awardPoints] Awarded ${amount} points to ${userId} for ${reason}. New total: ${newPoints}`)
     }
 }

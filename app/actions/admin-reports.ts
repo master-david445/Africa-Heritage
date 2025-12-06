@@ -21,10 +21,7 @@ export async function getReports() {
 
     const { data: reports, error } = await supabase
         .from("reports")
-        .select(`
-      *,
-      reporter:reporter_id (username)
-    `)
+        .select("*")
         .order("created_at", { ascending: false })
 
     if (error) {
@@ -32,14 +29,25 @@ export async function getReports() {
         throw new Error("Failed to fetch reports")
     }
 
-    // Fetch content details for each report
+    // Fetch content details and reporter usernames for each report
     const enrichedReports = await Promise.all(reports.map(async (report) => {
         let contentPreview = "Content not found"
+        let reporterUsername = "Unknown"
 
         try {
+            // Fetch reporter username
+            const { data: reporter } = await supabase
+                .from("profiles")
+                .select("username")
+                .eq("id", report.reporter_id)
+                .single()
+
+            if (reporter) reporterUsername = reporter.username
+
+            // Fetch content preview
             if (report.content_type === "proverb") {
-                const { data } = await supabase.from("proverbs").select("content").eq("id", report.content_id).single()
-                if (data) contentPreview = data.content
+                const { data } = await supabase.from("proverbs").select("proverb").eq("id", report.content_id).single()
+                if (data) contentPreview = data.proverb
             } else if (report.content_type === "comment") {
                 const { data } = await supabase.from("comments").select("content").eq("id", report.content_id).single()
                 if (data) contentPreview = data.content
@@ -53,7 +61,7 @@ export async function getReports() {
 
         return {
             ...report,
-            reporter_username: report.reporter?.username || "Unknown",
+            reporter_username: reporterUsername,
             content_preview: contentPreview
         }
     }))
