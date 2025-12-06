@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import {
     Table,
     TableBody,
@@ -73,7 +73,7 @@ export function UserManagementTable() {
         return () => clearTimeout(timer)
     }, [searchTerm])
 
-    const fetchUsers = useCallback(async () => {
+    const fetchUsers = async () => {
         try {
             setLoading(true)
             const data = await getAdminUsers(filters)
@@ -89,11 +89,11 @@ export function UserManagementTable() {
         } finally {
             setLoading(false)
         }
-    }, [filters, toast])
+    }
 
     useEffect(() => {
         fetchUsers()
-    }, [fetchUsers])
+    }, [filters])
 
     const handleAction = async (action: string, userId: string, value: boolean) => {
         try {

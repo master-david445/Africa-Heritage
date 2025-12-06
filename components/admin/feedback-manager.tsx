@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import {
     Card,
     CardContent,
@@ -48,7 +48,7 @@ export function FeedbackManager() {
     const [adminNotes, setAdminNotes] = useState("")
     const { toast } = useToast()
 
-    const fetchFeedback = useCallback(async () => {
+    const fetchFeedback = async () => {
         try {
             setLoading(true)
             const filters: any = {}
@@ -66,11 +66,11 @@ export function FeedbackManager() {
         } finally {
             setLoading(false)
         }
-    }, [typeFilter, statusFilter, toast])
+    }
 
     useEffect(() => {
         fetchFeedback()
-    }, [fetchFeedback])
+    }, [typeFilter, statusFilter])
 
     const handleOpenDialog = (item: Feedback) => {
         setSelectedFeedback(item)

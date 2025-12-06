@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import {
     Card,
     CardContent,
@@ -39,7 +39,7 @@ export function ProverbApprovalQueue() {
     const [selectedProverb, setSelectedProverb] = useState<string | null>(null)
     const { toast } = useToast()
 
-    const fetchProverbs = useCallback(async () => {
+    const fetchProverbs = async () => {
         try {
             setLoading(true)
             const data = await getPendingProverbs()
@@ -53,11 +53,11 @@ export function ProverbApprovalQueue() {
         } finally {
             setLoading(false)
         }
-    }, [toast])
+    }
 
     useEffect(() => {
         fetchProverbs()
-    }, [fetchProverbs])
+    }, [])
 
     const handleApprove = async (id: string) => {
         try {
