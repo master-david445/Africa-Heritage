@@ -8,7 +8,7 @@ export interface PendingProverb {
     content: string
     meaning: string
     origin: string
-    category: string
+    categories: string[]
     created_at: string
     user_id: string
     username: string
@@ -25,8 +25,8 @@ export async function getPendingProverbs() {
       id,
       proverb,
       meaning,
-      origin,
-      category,
+      country,
+      categories,
       created_at,
       status,
       user_id,
@@ -39,22 +39,24 @@ export async function getPendingProverbs() {
         .order("created_at", { ascending: true })
 
     if (error) {
-        console.error("Error fetching pending proverbs:", error)
         throw new Error("Failed to fetch pending proverbs")
     }
 
-    return data.map((item: any) => ({
-        id: item.id,
-        content: item.proverb,  // Map 'proverb' column to 'content' property
-        meaning: item.meaning,
-        origin: item.origin,
-        category: item.category,
-        created_at: item.created_at,
-        status: item.status,
-        user_id: item.user_id,
-        username: item.profiles?.username || "Unknown",
-        avatar_url: item.profiles?.avatar_url
-    })) as PendingProverb[]
+    return data.map((item) => {
+        const profile = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles
+        return {
+            id: item.id,
+            content: item.proverb,  // Map 'proverb' column to 'content' property
+            meaning: item.meaning,
+            origin: item.country,
+            categories: item.categories,
+            created_at: item.created_at,
+            status: item.status,
+            user_id: item.user_id,
+            username: profile?.username || "Unknown",
+            avatar_url: profile?.avatar_url
+        }
+    }) as PendingProverb[]
 }
 
 export async function approveProverb(proverbId: string) {

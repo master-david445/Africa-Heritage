@@ -108,18 +108,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserrat.variable} ${playfairDisplay.variable}`} suppressHydrationWarning>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                if (theme === 'dark') {
-                  document.documentElement.classList.add('dark');
-                }
-              } catch (e) {}
-            `,
-          }}
-        />
+
       </head>
       <body className="font-sans antialiased bg-white dark:bg-gray-950">
         <ErrorBoundary level="app" name="RootLayout" enableSentry={true}>
