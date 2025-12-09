@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
     Card,
     CardContent,
@@ -53,7 +53,7 @@ export function AnnouncementManager() {
     })
     const { toast } = useToast()
 
-    const fetchAnnouncements = async () => {
+    const fetchAnnouncements = useCallback(async () => {
         try {
             setLoading(true)
             const data = await getAllAnnouncements()
@@ -67,11 +67,11 @@ export function AnnouncementManager() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [toast])
 
     useEffect(() => {
         fetchAnnouncements()
-    }, [])
+    }, [fetchAnnouncements])
 
     const handleSubmit = async () => {
         if (!formData.title || !formData.message) {

@@ -37,6 +37,8 @@ export type Database = {
           is_featured: boolean
           views: number
           shares: number
+          status: "pending" | "approved" | "rejected"
+          rejection_reason: string | null
         }
         Insert: Omit<Database["public"]["Tables"]["proverbs"]["Row"], "id" | "created_at" | "updated_at">
         Update: Partial<Database["public"]["Tables"]["proverbs"]["Row"]>

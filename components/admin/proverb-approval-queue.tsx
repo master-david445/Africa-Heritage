@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
     Card,
     CardContent,
@@ -39,7 +39,7 @@ export function ProverbApprovalQueue() {
     const [selectedProverb, setSelectedProverb] = useState<string | null>(null)
     const { toast } = useToast()
 
-    const fetchProverbs = async () => {
+    const fetchProverbs = useCallback(async () => {
         try {
             setLoading(true)
             const data = await getPendingProverbs()
@@ -53,11 +53,11 @@ export function ProverbApprovalQueue() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [toast])
 
     useEffect(() => {
         fetchProverbs()
-    }, [])
+    }, [fetchProverbs])
 
     const handleApprove = async (id: string) => {
         try {
@@ -170,7 +170,11 @@ export function ProverbApprovalQueue() {
                                     </h3>
                                     <div className="flex gap-2 mt-2">
                                         <Badge variant="secondary">{proverb.origin}</Badge>
-                                        <Badge variant="outline">{proverb.category}</Badge>
+                                        <div className="flex flex-wrap gap-2">
+                                            {proverb.categories?.map((cat) => (
+                                                <Badge key={cat} variant="outline">{cat}</Badge>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
