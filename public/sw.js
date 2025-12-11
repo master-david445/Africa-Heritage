@@ -3,7 +3,16 @@ const CACHE_NAME = 'african-heritage-v2';
 const STATIC_CACHE = 'african-heritage-static-v2';
 const DYNAMIC_CACHE = 'african-heritage-dynamic-v2';
 
-// ... (STATIC_ASSETS remains the same, assuming we don't need to change them)
+// Assets to cache immediately
+const STATIC_ASSETS = [
+  '/',
+  '/landing',
+  '/explore',
+  '/manifest.json',
+  '/logo.svg',
+  '/placeholder.jpg',
+  '/placeholder.svg'
+];
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
