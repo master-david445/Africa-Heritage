@@ -61,6 +61,8 @@ const mockProverbs: Record<string, ProverbWithUser> = {
     is_featured: false,
     views: 234,
     shares: 12,
+    status: "approved",
+    rejection_reason: null,
     profiles: {
       id: "user1",
       username: "Amara Kofi",
@@ -95,6 +97,8 @@ const mockProverbs: Record<string, ProverbWithUser> = {
     is_featured: true,
     views: 456,
     shares: 34,
+    status: "approved",
+    rejection_reason: null,
     profiles: {
       id: "user5",
       username: "Zainab Hassan",

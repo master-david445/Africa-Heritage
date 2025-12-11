@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @layer base {
+
   /* Base mobile optimizations */
   html {
     -webkit-text-size-adjust: 100%;
@@ -17,7 +17,8 @@
   select,
   textarea,
   button {
-    font-size: 16px !important; /* Prevent iOS zoom on focus */
+    font-size: 16px !important;
+    /* Prevent iOS zoom on focus */
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -39,7 +40,13 @@
   }
 
   /* Prevent long words from breaking layout */
-  p, h1, h2, h3, h4, h5, h6 {
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     overflow-wrap: break-word;
     word-wrap: break-word;
     hyphens: auto;
@@ -152,8 +159,8 @@
 }
 
 @theme inline {
-  --font-sans: "Montserrat", "Geist", "Geist Fallback";
-  --font-serif: "Playfair Display", "Georgia", "Garamond", serif;
+  --font-sans: var(--font-montserrat), "Geist", "Geist Fallback";
+  --font-serif: var(--font-playfair), "Georgia", "Garamond", serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -202,26 +209,33 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 
   /* Mobile-specific fixes */
   @media (max-width: 768px) {
+
     /* Ensure content is visible on mobile */
     * {
       -webkit-tap-highlight-color: transparent;
     }
 
     /* Fix for mobile viewport issues */
-    html, body {
+    html,
+    body {
       overflow-x: hidden;
       width: 100%;
       position: relative;
     }
 
     /* Ensure buttons and interactive elements are properly sized for touch */
-    button, a, input, select, textarea {
+    button,
+    a,
+    input,
+    select,
+    textarea {
       min-height: 44px;
       min-width: 44px;
     }
@@ -229,7 +243,8 @@
     /* Fix for mobile menu positioning */
     .mobile-menu {
       position: fixed;
-      top: 64px; /* header height */
+      top: 64px;
+      /* header height */
       left: 0;
       right: 0;
       z-index: 40;
@@ -256,7 +271,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 }
 
@@ -376,6 +393,7 @@
       opacity: 0;
       transform: translateY(30px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -387,6 +405,7 @@
       opacity: 0;
       transform: translateX(-30px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -398,6 +417,7 @@
       opacity: 0;
       transform: translateX(30px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -405,9 +425,12 @@
   }
 
   @keyframes pulseGlow {
-    0%, 100% {
+
+    0%,
+    100% {
       box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
     }
+
     50% {
       box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
     }
@@ -417,20 +440,16 @@
 /* Cultural pattern utilities */
 @layer utilities {
   .pattern-kente {
-    background-image: repeating-linear-gradient(
-        45deg,
+    background-image: repeating-linear-gradient(45deg,
         transparent,
         transparent 35px,
         rgba(234, 88, 12, 0.05) 35px,
-        rgba(234, 88, 12, 0.05) 70px
-      ),
-      repeating-linear-gradient(
-        -45deg,
+        rgba(234, 88, 12, 0.05) 70px),
+      repeating-linear-gradient(-45deg,
         transparent,
         transparent 35px,
         rgba(220, 38, 38, 0.05) 35px,
-        rgba(220, 38, 38, 0.05) 70px
-      );
+        rgba(220, 38, 38, 0.05) 70px);
   }
 
   .pattern-adinkra {
@@ -470,40 +489,40 @@
   .animate-fade-in {
     animation: fadeIn 0.8s ease-out forwards;
   }
-  
+
   .animate-fade-in-delay {
     animation: fadeIn 0.8s ease-out 0.2s forwards;
     opacity: 0;
   }
-  
+
   .animate-slide-up {
     animation: slideUp 0.6s ease-out forwards;
   }
-  
+
   .animate-slide-up-delay-1 {
     animation: slideUp 0.6s ease-out 0.2s forwards;
     opacity: 0;
   }
-  
+
   .animate-slide-up-delay-2 {
     animation: slideUp 0.6s ease-out 0.4s forwards;
     opacity: 0;
   }
-  
+
   .animate-fade-in-up {
     animation: fadeInUp 0.6s ease-out forwards;
   }
-  
+
   .animate-fade-in-up-delay-1 {
     animation: fadeInUp 0.6s ease-out 0.2s forwards;
     opacity: 0;
   }
-  
+
   .animate-fade-in-up-delay-2 {
     animation: fadeInUp 0.6s ease-out 0.4s forwards;
     opacity: 0;
   }
-  
+
   .animate-bounce-slow {
     animation: bounceSlow 2s infinite ease-in-out;
   }
@@ -511,16 +530,22 @@
 
 /* Global Keyframes */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(30px);
   }
-  to { 
+
+  to {
     opacity: 1;
     transform: translateY(0);
   }
@@ -531,6 +556,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -538,6 +564,13 @@
 }
 
 @keyframes bounceSlow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
 }

@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { createClient } from "@/lib/supabase/client"
+import { checkUsernameAvailability as checkUsernameAction } from "@/app/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -24,15 +25,14 @@ export default function SignUpPage() {
   // Check username availability
   const checkUsernameAvailability = async (username: string) => {
     if (!username) return
-    const supabase = createClient()
-    const { data, error } = await supabase.from("profiles").select("id").eq("username", username).single()
 
-    if (error?.code === "PGRST116") {
-      // No rows found - username is available
+    // Use server action to avoid CORS issues
+    const isAvailable = await checkUsernameAction(username)
+
+    if (isAvailable) {
       setUsernameError(null)
       return true
-    } else if (data) {
-      // Username already exists
+    } else {
       setUsernameError("Username already taken")
       return false
     }

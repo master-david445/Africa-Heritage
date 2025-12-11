@@ -25,7 +25,7 @@ export default function NotificationBell() {
       setNotifications(notifs)
       setUnreadCount(count)
     } catch (error) {
-      console.error("Error loading notifications:", error)
+      // Fail silently for UI components
     }
   }
 
@@ -41,7 +41,7 @@ export default function NotificationBell() {
       )
       setUnreadCount(prev => Math.max(0, prev - 1))
     } catch (error) {
-      console.error("Error marking notification as read:", error)
+      // Fail silently
     }
   }
 
@@ -52,7 +52,7 @@ export default function NotificationBell() {
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
       setUnreadCount(0)
     } catch (error) {
-      console.error("Error marking all notifications as read:", error)
+      // Fail silently
     } finally {
       setLoading(false)
     }
