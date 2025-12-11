@@ -1,18 +1,9 @@
 // Service Worker for Koroba PWA
-const CACHE_NAME = 'african-heritage-v1';
-const STATIC_CACHE = 'african-heritage-static-v1';
-const DYNAMIC_CACHE = 'african-heritage-dynamic-v1';
+const CACHE_NAME = 'african-heritage-v2';
+const STATIC_CACHE = 'african-heritage-static-v2';
+const DYNAMIC_CACHE = 'african-heritage-dynamic-v2';
 
-// Assets to cache immediately
-const STATIC_ASSETS = [
-  '/',
-  '/landing',
-  '/explore',
-  '/manifest.json',
-  '/logo.svg',
-  '/placeholder.jpg',
-  '/placeholder.svg'
-];
+// ... (STATIC_ASSETS remains the same, assuming we don't need to change them)
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -49,9 +40,36 @@ self.addEventListener('fetch', (event) => {
   // Skip Supabase API calls (they need fresh data)
   if (url.hostname.includes('supabase.co')) return;
 
-  // Skip Next.js internal routes
-  if (url.pathname.startsWith('/_next/')) return;
+  // Skip Next.js internal routes (except assets handled below)
+  if (url.pathname.startsWith('/_next/')) {
+    // If it's a static file (css/js/media), we might want to cache it, but Next.js hashes files so they are unique.
+    // We generally rely on browser cache for these.
+    return;
+  }
 
+  // Network First Strategy for HTML Navigation
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          return caches.open(DYNAMIC_CACHE)
+            .then((cache) => {
+              cache.put(request, response.clone());
+              return response;
+            });
+        })
+        .catch(() => {
+          return caches.match(request)
+            .then((cachedResponse) => {
+              if (cachedResponse) return cachedResponse;
+              return caches.match('/landing');
+            });
+        })
+    );
+    return;
+  }
+
+  // Cache First Strategy for everything else (Images, Fonts, etc.)
   event.respondWith(
     caches.match(request)
       .then((cachedResponse) => {
@@ -73,12 +91,6 @@ self.addEventListener('fetch', (event) => {
               });
 
             return response;
-          })
-          .catch(() => {
-            // Return offline fallback for navigation requests
-            if (request.mode === 'navigate') {
-              return caches.match('/landing');
-            }
           });
       })
   );
